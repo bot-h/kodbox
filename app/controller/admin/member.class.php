@@ -12,6 +12,22 @@ class adminMember extends Controller{
 	function __construct()    {
 		parent::__construct();
 		$this->model = Model('User');
+		$this->authCheck();
+	}
+
+	public function authCheck(){
+		if($GLOBALS['isRoot']) return;
+		if(MOD == 'install') return;
+		$data = Input::getArray(array(
+			"userID"	=> array("default"=>null),
+			"roleID"	=> array("default"=>2),
+		));
+		if($data['userID'] == '1') {
+			show_json(LNG('admin.member.editNoAuth'), false);
+		}
+		if(!in_array(ACTION, array('admin.member.add', 'admin.member.edit'))) return;
+		if($data['roleID'] != '1') return;
+		show_json(LNG('admin.member.editNoAuth'), false);
 	}
 
 	/**
