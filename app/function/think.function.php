@@ -297,7 +297,13 @@ function think_status($start, $end = '', $dec = 4) {
  * @return void
  */
 function think_trace($value = '[think]', $label = '', $level = 'DEBUG', $record = false) {
-	if(defined('GLOBAL_DEBUG') && !GLOBAL_DEBUG) return;
+	if(defined('GLOBAL_DEBUG') && !GLOBAL_DEBUG ){
+		if($level == 'ERR'){// 运行异常; 抛出异常
+			$info = ($label ? $label . ':' : '') . print_r($value, true);
+			return think_exception($info);
+		}
+		return;	
+	}
     static $_trace = array();
     if ('[sql]' === $value) {
 		$level = 'SQL';
@@ -311,10 +317,10 @@ function think_trace($value = '[think]', $label = '', $level = 'DEBUG', $record 
     }else if ('[think]' === $value) { // 获取trace信息
         think_exception($_trace);
     } else {
-        $info = ($label ? $label . ':' : '') . print_r($value, true);
-        if ('ERR' == $level) {// 抛出异常
-            think_exception($info);
-        }
+		$info = ($label ? $label . ':' : '') . print_r($value, true);
+		if($level == 'ERR'){// 运行异常; 抛出异常
+			return think_exception($info);
+		}
         $level = strtoupper($level);
         if (!isset($_trace[$level])) {
 			$_trace[$level] = array(

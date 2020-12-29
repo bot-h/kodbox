@@ -2,7 +2,7 @@
 
 /**
  * change by warlee 2019.08.19
- * https://tool.css-js.com/   YUI压缩
+ * https://www.css-js.com/   YUI压缩
 
  * -  _getTansferFiles  文件长度为空过滤(选中文本进行拖拽)
  * -  tr.on( 'error'   上传失败重传，加入用户定义部分 (~'http,abort'.indexOf( type )  || block.serverNeedRetry)

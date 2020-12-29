@@ -76,8 +76,6 @@ function get_host() {
 	$protocol = http_type().'://';
 	$url_host = $_SERVER['SERVER_NAME'].($_SERVER['SERVER_PORT']=='80' ? '' : ':'.$_SERVER['SERVER_PORT']);
 	$host = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : $url_host;
-	// $host = $_SERVER['SERVER_NAME'].($_SERVER['SERVER_PORT']=='80' ? '' : ':'.$_SERVER['SERVER_PORT']);
-	// // $host = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : $host;
 	$host = isset($_SERVER['HTTP_X_FORWARDED_HOST']) ? $_SERVER['HTTP_X_FORWARDED_HOST'] : $host;//proxy
 	return $protocol.$host;
 }
@@ -140,6 +138,9 @@ function is_wap(){
  */
 function http_close(){
 	ignore_timeout(0);
+	static $firstRun = false;
+	if($firstRun) return; //避免重复调用;
+	
 	if(function_exists('fastcgi_finish_request')) {
 		fastcgi_finish_request();
 	} else {
@@ -150,6 +151,7 @@ function http_close(){
 		ob_end_flush();
 		flush();
 	}
+	$firstRun = true;
 }
 
 function parse_headers($raw_headers){

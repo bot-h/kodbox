@@ -41,6 +41,9 @@ class explorerList extends Controller{
 		$this->dataParseHidden($data);
 		$data = Action('explorer.listGroup')->groupChildAppend($data);
 		$data = Action('explorer.fav')->favAppend($data);
+		$this->pageReset($data);
+
+		//pr_trace();exit;
 		if($thePath) return $data;
 		show_json($data);
 	}
@@ -174,6 +177,25 @@ class explorerList extends Controller{
 			$data['fileList'] 	= array_slice($data['fileList'],0,$pageNum-($folderNeed) );
 		}
 	}
+	private function pageReset(&$data){
+		if(!isset($data['pageInfo'])) return;
+		$total = count($data['fileList']) + count($data['folderList']) + count($data['groupList']);
+		$pageInfo = $data['pageInfo'];
+		if(	$pageInfo['page'] == 1 && $pageInfo['pageTotal'] == 1){
+			$data['pageInfo']['totalNum'] = $total;			
+		}
+
+		// 某一页因为权限全部过滤掉内容, 则加大每页获取条数;
+		if(	$total == 0 && $pageInfo['totalNum'] != 0 && $pageInfo['pageTotal'] > 1 ){
+			$this->in['pageNum'] = $pageInfo['pageNum'] * 2;
+			if($this->in['pageNum'] < 500){
+				$this->in['pageNum'] = 500;
+			}
+			$newData = $this->path($this->in['path']);
+			show_json($newData);
+		}
+	}
+	
 	private function _parseOrder(){
 		$defaultField = Model('UserOption')->get('listSortField');
 		$defaultSort  = Model('UserOption')->get('listSortOrder');
@@ -232,6 +254,7 @@ class explorerList extends Controller{
 			}
 		}
 		$current = Model('SourceAuth')->authOwnerApply($current);
+		// pr($loadInfo,$current,$path);exit;
 
 		if(!$current){
 			$current = $this->ioInfo($info['type']);
@@ -280,7 +303,7 @@ class explorerList extends Controller{
 				'fileList'		=> array()
 			);
 		}
-
+		$path = rtrim($path,'/').'/';
 		$data['current']  = $this->pathCurrent($path);
 		$data['thisPath'] = $path;
 		$data['targetSpace'] = $this->targetSpace($data['current']);		
@@ -323,6 +346,10 @@ class explorerList extends Controller{
 	
 	// 用户或部门空间尺寸;
 	public function targetSpace($current){
+		if(	$current['auth'] &&
+			$current['auth']['authValue'] == -1 ){
+			return false;
+		}
 		if(!$current || !isset($current['targetType'])){
 			// return false;
 			$current = array("targetType"=>'user','targetID'=>USER_ID);//用户空间;
@@ -346,12 +373,13 @@ class explorerList extends Controller{
 		if($GLOBALS['isRoot'] && $this->config["ADMIN_ALLOW_SOURCE"]) return $list;
 		foreach ($list as $key => $item) {
 			if( isset($item['targetType']) &&
-				$item['targetType'] == 'user' && $item['targetID'] == USER_ID ){
+				$item['targetType'] == 'user' &&
+				$item['targetID'] == USER_ID ){
 				continue;
 			}
-			if( isset($item['auth']) &&
-				is_array($item['auth']) && 
-				$item['auth']['authValue'] == 0){
+			if( isset($item['targetType']) && 
+				(!$item['auth'] || $item['auth']['authValue'] == 0 ) // 不包含-1,构建通路;
+			){
 				unset($list[$key]);
 			}
 		}
@@ -476,7 +504,9 @@ class explorerList extends Controller{
 			}
 		}
 		
+		if(!$this->pathEnable('myFav')){unset($list['fav']);}
 		if(!$this->pathEnable('my')){unset($list['my']);}
+		if(!$this->pathEnable('rootGroup')){unset($list['rootGroup']);}
 		if(!$this->pathEnable('myGroup')){unset($list['myGroup']);}
 		return array_values($list);
 	}
@@ -486,17 +516,26 @@ class explorerList extends Controller{
 		$option = $model->get();
 		if( !isset($option['treeOpen']) ) return true;
 		
-		//单独添加driver情况;更新后处理;  单独加入文件类型开关,则根据flag标记;自动处理;
+		// 单独添加driver情况;更新后处理;  单独加入文件类型开关,则根据flag标记;自动处理;
+		// my,myFav,myGroup,rootGroup,recentDoc,fileType,fileTag,driver
 		$checkFlag = false;
 		$checkType = array(
+			'treeOpenMy' 		=> 'my',
+			'treeOpenMyGroup' 	=> 'myGroup',
+			'treeOpenFileType' 	=> 'fileType',
+			'treeOpenFileTag' 	=> 'fileTag',
+			'treeOpenRecentDoc' => 'recentDoc',
+			
 			'treeOpenDriver' 	=> 'driver',
-			'treeOpenFileFlag' 	=> 'fileTag',
+			'treeOpenFav'		=> 'myFav',
+			'treeOpenRootGroup'	=> 'rootGroup',
 		);
 		foreach ($checkType as $keyType=>$key){
 			if( $option[$keyType] !='ok'){
 				$model->set($keyType,'ok');
 				$model->set('treeOpen',$option['treeOpen'].','.$key);
 				$result = true;
+				$option = $model->get();
 			}
 		}
 		if($result) return true;

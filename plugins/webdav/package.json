@@ -2,7 +2,7 @@
 	"id":"webdav",
 	"name":"{{LNG['webdav.meta.name']}}",
 	"title":"{{LNG['webdav.meta.title']}}",
-	"version":"1.08",
+	"version":"1.10",
 	"source":{
 		"className":" font-icon icon-hard-drive1 bg-yellow-6",
 		"icon":""

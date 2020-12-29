@@ -1,6 +1,12 @@
 kodReady.push(function () {
 	G.webdavAllow = parseInt("{{isAllow}}");
 	G.webdavHost  = G.kod.APP_HOST+'index.php/plugin/webdav/{{webdavName}}/';
+	G.webdavOption = {
+		host:  G.kod.APP_HOST+'index.php/plugin/webdav/{{webdavName}}/',
+		allow: parseInt("{{isAllow}}"),
+		pathAllow: '{{pathAllow}}'
+	};
+	
 	Events.bind("admin.leftMenu.before",function(menuList){
 		menuList.push({
 			title:LNG['webdav.meta.name'],
@@ -13,7 +19,7 @@ kodReady.push(function () {
 	});
 	
 	Events.bind("user.leftMenu.before",function(menuList){
-		if(!G.webdavAllow) return;
+		if(!G.webdavOption.allow) return;
 		menuList.push({
 			title:LNG['webdav.meta.name'],
 			icon:"icon-hard-drive1",

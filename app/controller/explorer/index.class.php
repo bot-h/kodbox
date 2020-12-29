@@ -97,7 +97,7 @@ class explorerIndex extends Controller{
 		$info = IO::infoSimple($data['path']);
 		if($info && $info['sourceID']){
 			foreach ($meta as $key => $value) {
-				if(substr($key,0,5) != 'user_'){
+				if( !$this->metaKeyCheck($key) ){
 					show_json("key error!",false);
 				}
 				$value = $value === '' ? null:$value; //为空则删除;
@@ -106,6 +106,18 @@ class explorerIndex extends Controller{
 			show_json(IO::info($data['path']),true);
 		}
 		show_json(LNG('explorer.error'),false);
+	}
+	private function metaKeyCheck($key){
+		static $metaKeys = false;
+		if(!$metaKeys){
+			$metaKeys = array_keys($this->config['settings']['sourceMeta']);
+			$keyArr = array(
+				'systemSort',	// 置顶
+				'systemLock',	// 编辑锁定
+			);
+			$metaKeys = array_merge($metaKeys,$keyArr);
+		}
+		return in_array($key,$metaKeys);
 	}
 		
 	/**

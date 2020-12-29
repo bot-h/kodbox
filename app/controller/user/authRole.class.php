@@ -103,7 +103,7 @@ class userAuthRole extends Controller {
 		$allowAction = $userRole['allowAction'];
 		// pr($allowAction[$theAction],$theAction,$user,$userRole);exit;
 		if(!$allowAction[$theAction]){ //不存在该方法或
-			show_json(LNG('explorer.noPermissionAction'),false);
+			show_json(LNG('explorer.noPermissionAction'),false,1004);
 		}
 	}
 	

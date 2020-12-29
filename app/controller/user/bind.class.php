@@ -432,12 +432,13 @@ class userBind extends Controller {
 			);
 		}
 		// 参数拼接
-		$systemName = Model('SystemOption')->get('systemName'); // 落款-系统名称
+		$systemName = Model('SystemOption')->get('systemName'); // 签名-系统名称
 		$subject = isset($param['subject']) ? $param['subject'] : LNG('user.emailVerify'); // 主题
 		$data = array(
 			'address'	 => $param['address'], // 收件人
 			'subject'	 => "[{$systemName}]" . $subject, // 主题
 			'content'	 => $this->emailContent($content), // 内容
+			'signature'  => $systemName,
 			'html'		 => 1
 		);
 		// 邮件发送
@@ -458,7 +459,7 @@ class userBind extends Controller {
 			'type'		 => $type,
 			'input'		 => $param['address'], // 邮箱or手机
 			'language'	 => i18n::getType(),
-			'company'	 => Model('SystemOption')->get('systemName')
+			'signature'	 => Model('SystemOption')->get('systemName')
 		);
 		return $this->apiRequest('email', $data);
 	}
@@ -479,17 +480,17 @@ class userBind extends Controller {
 		$type = $content['type'];
 
 		$data = array(
-			'type' => $type,
-			'dear' => LNG('admin.dearUser'),
-			'codeDesc' => sprintf(LNG('admin.emailThxUse'), $tmp['systemName']) . LNG('admin.emailVerifyCode'),
-			'code' => $tmp['code'],
-			'codeTips' => LNG('admin.emailVerifyInTime'),
-			'dearName' => LNG('admin.dear') . $tmp['nickname'],
-			'linkDesc' => sprintf(LNG('admin.emailResetLink'), $tmp['systemName']),
-			'link' => $tmp['url'],
-			'linkTips' => LNG('admin.emailExpireTime'),
-			'name' => $tmp['systemName'],
-			'date' => $tmp['date'],
+			'type'		=> $type,
+			'dear'		=> LNG('admin.dearUser'),
+			'codeDesc'	=> sprintf(LNG('admin.emailThxUse'), $tmp['systemName']) . LNG('admin.emailVerifyCode'),
+			'code'		=> $tmp['code'],
+			'codeTips'	=> LNG('admin.emailVerifyInTime'),
+			'dearName'	=> LNG('admin.dear') . $tmp['nickname'],
+			'linkDesc'	=> sprintf(LNG('admin.emailResetLink'), $tmp['systemName']),
+			'link'		=> $tmp['url'],
+			'linkTips'	=> LNG('admin.emailExpireTime'),
+			'name'		=> $tmp['systemName'],
+			'date'		=> $tmp['date'],
 		);
 		ob_end_clean();
 		ob_start();

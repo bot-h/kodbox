@@ -141,22 +141,44 @@ class kodWebDav extends HttpDavServer {
 	}	
 	
 	public function pathPut($path,$localFile=''){
-		$name 		= IO::pathThis($this->pathGet());
-		$driver 	= IO::init($path);
-		$father 	= $driver->getPathOuter(IO::pathFather($path));
-		// $father 	= $this->parsePath(IO::pathFather($this->pathGet()));
-		$uploadPath = rtrim($father,'/').'/'.$name; //构建上层目录追加文件名;
-		$this->plugin->log("upload to=$uploadPath=>$father;local=$localFile");
-
+		$info = IO::infoFull($path);
+		if($info){	// 文件已存在; 则使用文件父目录追加文件名;
+			$name 		= IO::pathThis($this->pathGet());
+			$father 	= IO::init($path)->getPathOuter(IO::pathFather($path));
+			$uploadPath = rtrim($father,'/').'/'.$name; //构建上层目录追加文件名;
+		}else{		// 首次请求创建,文件不存在; 则使用{source:xx}/newfile.txt;
+			$uploadPath = $path;
+		}
 		if(!$this->can($path,'edit')) return false;
-		if(!$this->pathExists($path)){ //新建;
-			return IO::mkfile($path);
+
+		// 传入了文件; wscp等直接一次上传处理的情况;  windows/mac等会调用锁定,解锁,判断是否存在等之后再上传;
+		// 文件夹下已存在,或在回收站中处理;
+		$replace = REPEAT_REPLACE;
+		if($localFile){
+			$result = IO::upload($uploadPath,$localFile,true,$replace);
+		}else{
+			$result = IO::mkfile($uploadPath,'',$replace);
 		}
-		if(!$localFile){
-			return IO::setContent($path,'');
+
+		// 删除临时文件; mac系统生成两次 ._file.txt;
+		if($localFile){ 
+			$this->pathPutRemoveTemp($uploadPath);
+			$this->pathPutRemoveTemp($uploadPath);
 		}
-		return IO::upload($uploadPath,$localFile,true);
+		// $this->plugin->log("upload=$uploadPath;path=".$path.';res='.$result.';temp='.$tempPath.";local=$localFile;");
+		return $result;
 	}
+	private function pathPutRemoveTemp($path){
+		$pathArr = explode('/',$path);
+		$pathArr[count($pathArr) - 1] = '._'.$pathArr[count($pathArr) - 1];
+		
+		$tempPath = implode('/',$pathArr);
+		$tempInfo = IO::infoFull($tempPath);
+		if($tempInfo){
+			IO::remove($tempInfo['path'],false);
+		}
+	}
+	
 	public function pathRemove($path){
 		if(!$this->can($path,'remove')) return false;
 		return IO::remove($path);

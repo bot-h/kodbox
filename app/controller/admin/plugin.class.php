@@ -61,7 +61,6 @@ class adminPlugin extends Controller{
 
 	public function getConfig(){
 		$app = Input::get('app');
-		ActionCall($app.'Plugin.onGetConfig',$app);
 		$data = $this->model->getConfig($app);
 		$package  = $this->model->getPackageJson($app);
 		$formData = $package['configItem'];
@@ -76,7 +75,11 @@ class adminPlugin extends Controller{
 			if( is_array($item) && $item['type'] == 'userSelect' && !isset($item['info']) ){
 				$item['info'] = $userSelect;
 			}
-		}		
+		}
+		$result = ActionCall($app.'Plugin.onGetConfig',$formData);
+		if(is_array($result)){
+			$formData = $result;
+		}
 		show_json($formData);
 	}
 
@@ -96,8 +99,12 @@ class adminPlugin extends Controller{
 			}
 		}
 		$this->model->changeStatus($app,1);
+		$result = ActionCall($app.'Plugin.onSetConfig',$json);
+		if(is_array($result)){
+			$json = $result;
+		}
+				
 		$this->model->setConfig($app,$json);
-		ActionCall($app.'Plugin.onSetConfig',$json,$app);
 		show_json(LNG('explorer.success'));
 	}
 

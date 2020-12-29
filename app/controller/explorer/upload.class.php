@@ -77,7 +77,8 @@ class explorerUpload extends Controller{
 		if(IO::isType($inPath, "DB")){
 			$path = KodIO::defaultIO().$inPath;
 		}else{
-			$path = substr($inPath, 0, stripos($inPath, '/')) . '/' . $inPath;
+			$pathBase = substr($inPath, 0, stripos($inPath, '/'));
+			$path = (!$pathBase ? $inPath : $pathBase) . '/' . $inPath;
 		}
 		$paramMore = $this->getParamMore();
 		$result = IO::multiUploadAuthData($path, $paramMore);

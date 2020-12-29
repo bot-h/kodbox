@@ -13,9 +13,81 @@ class adminLog extends Controller{
      * @return void
      */
     public function typeList(){
-        $typeList = $this->model->getTypeList();
-        show_json($typeList);
-    }
+        $typeList = $this->model->allTypeList();
+        $list = array(
+            'all'   => array('id' => 'all',  'text' => LNG('common.all')),
+            'file'  => array('id' => 'file', 'text' => LNG('admin.log.typeFile')),
+            'user'  => array('id' => 'user', 'text' => LNG('admin.log.typeUser')),
+            'admin' => array('id' => 'admin','text' => LNG('admin.manage')),
+        );
+        foreach($typeList as $type => $name) {
+            $action = explode('.', $type);
+            $mod = $action[0];
+            if(!isset($list[$mod])) continue;
+            $list[$mod]['children'][] = array('id' => $type,'text' => $name);
+		}
+        $fileList = array(
+            array('id' => 'explorer.index.fileDownload', 'text' => LNG('admin.log.downFile')),
+            array('id' => 'explorer.fav.add', 'text' => LNG('explorer.addFav')),
+            array('id' => 'explorer.fav.del', 'text' => LNG('explorer.delFav')),
+        );
+		$list['file']['children'] = array_merge($list['file']['children'], $fileList);
+        $list = $this->typeListMerge($list);
+        show_json($list);
+	}
+	
+	// 合并操作日志类型;
+	private function typeListMerge($list){
+		$mergeList = array(
+			'file' => array(
+				// 'file.edit,file.rename'  => LNG('admin.log.editFile'),
+				// 'file.mkdir,file.mkfile' => '新建文件(夹)',
+				'file.copy,file.move,file.moveOut' => LNG('log.file.move'),
+				'explorer.fav.add,explorer.fav.del' => LNG('log.file.fav'),
+				'file.shareLinkAdd,file.shareLinkRemove' => LNG('log.file.shareLink'),
+				'file.shareToAdd,file.shareToRemove' => LNG('log.file.shareTo'),
+			),
+			'user' => array(
+				'user.setting.setHeadImage,user.setting.setUserInfo,user.bind.bindApi,user.bind.unbind' => LNG('log.user.edit'),
+			),
+			'admin' => array(
+				'admin.group.add,admin.group.edit,admin.group.remove' => LNG('log.group.edit'),
+				'admin.member.add,admin.member.edit,admin.member.remove,admin.member.addGroup,admin.member.removeGroup,admin.member.status' => LNG('log.member.edit'),
+				'admin.role.add,admin.role.edit,admin.role.remove' => LNG('log.role.edit'),
+				'admin.auth.add,admin.auth.edit,admin.auth.remove' => LNG('log.auth.edit'),
+			),
+		);
+		foreach($list as $listKey => $item) {
+			if(!$item['children'] || !$mergeList[$item['id']]) continue;
+			$actionMake = array();
+			foreach ($mergeList[$item['id']] as $actions => $text) {
+				$actionArr = explode(',',$actions);				
+				$actionMake[$actions] = false;//isMerged 是否合并;
+				foreach ($actionArr as $action) {
+					$actionMake[$action] = array('data'=>array('id'=> $actions,'text'=> $text),'actions'=>$actions);
+				}
+			}
+			
+			$children = array();
+			foreach ($item['children'] as $childItem) {
+				$action = $childItem['id'];
+				if( isset($actionMake[$action]) ){
+					$item = $actionMake[$action];
+					if( !$actionMake[$item['actions']] ){
+						$children[] = $item['data'];
+						$actionMake[$item['actions']] = true;
+					}
+				}else{
+					$children[] = $childItem;
+				}
+			}
+			// pr($item,$children,$actionMake);exit;
+			$list[$listKey]['children'] = $children;
+		}
+		$list = array_values($list);
+		return $list;
+	}
+	
 
 	/**
      * 日志列表
@@ -61,7 +133,6 @@ class adminLog extends Controller{
         }
         // 第三方绑定
         if(ACTION == 'user.bind.bindApi' && !$data['success']) return;
-        // 登录日志
         if(ACTION == 'user.index.loginSubmit'){
             return $this->loginLog();
         }

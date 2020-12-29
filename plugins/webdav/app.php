@@ -16,9 +16,11 @@ class webdavPlugin extends PluginBase{
 		));
 	}
 	public function echoJs(){
+		$config = $this->getConfig();
 		$allow  = $this->isOpen() && $this->authCheck();
 		$assign = array(
-			"{{isAllow}}" => intval($allow),
+			"{{isAllow}}" 	 => intval($allow),
+			"{{pathAllow}}"	 => $config['pathAllow'],
 			"{{webdavName}}" => $this->webdavName(),
 		);
 		$this->echoFile('static/main.js',$assign);
@@ -62,11 +64,11 @@ class webdavPlugin extends PluginBase{
 		return false;
 	}
 
-	public function onSetConfig($value,$app){
-		if($value['isOpen'] != '1') return;
-		$this->onGetConfig($app);
+	public function onSetConfig($config){
+		if($config['isOpen'] != '1') return;
+		$this->onGetConfig($config);
 	}
-	public function onGetConfig($app){
+	public function onGetConfig($config){
 		$this->autoApplyApache();
 		if($this->checkSupport()) return;
 		show_tips(
@@ -106,7 +108,10 @@ class webdavPlugin extends PluginBase{
 	}
 	public function log($data){
 		if(!$this->echoLog) return;
-		if($_SERVER['REQUEST_METHOD'] == 'PROPFIND') return;
+		// if($_SERVER['REQUEST_METHOD'] == 'PROPFIND' && !strstr($_SERVER['REQUEST_METHOD'],'aaa')) return;
+		if($_SERVER['REQUEST_METHOD'] == 'PROPFIND' ) return;
+		if(is_array($data)){$data = json_encode_force($data);}
+		
 		$data = $_SERVER['REQUEST_METHOD'].' '.$data;
 		// $data = array($data,$_SERVER);
 		write_log($data,'webdav');

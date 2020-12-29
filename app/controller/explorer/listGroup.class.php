@@ -49,15 +49,17 @@ class explorerListGroup extends Controller{
 			// $pathInfo['name'] = '['.$pathInfo['name'].']';
 			$pathInfo['sourceRoot'] = 'groupPath';
 			$pathInfo['pathDisplay']= $pathInfo['groupPathDisplay'];
+			if(!$pathInfo['auth']){
+				$pathInfo['auth'] = Model("SourceAuth")->authDeepCheck($pathInfo['sourceID']);
+			}
 			if(!$GLOBALS['isRoot']){
-				if( !$pathInfo['auth'] || $pathInfo['auth']['authValue'] == 0){
+				if( !$pathInfo['auth'] || $pathInfo['auth']['authValue'] == 0){ // 放过-1; 打开通路;
 					continue;// 没有权限;
 				}
 			}
 			$result[] = $pathInfo;
 		}
-
-		// pr($groupList,$groupInfo,$groupSource);exit;
+		// pr($result,$groupInfo,$groupSource);exit;
 		return $result;
 	}
 	
@@ -71,11 +73,10 @@ class explorerListGroup extends Controller{
 		if(!$this->enableListGroup($pathInfo['targetID'])) return $data;
 		$groupID = $pathInfo['targetID'];
 		$groupList  = $this->modelGroup->where(array('parentID'=>$groupID))->select();
-
-		$groupListItem  =  $this->groupArray($groupList);		
-		$data['groupList']  = $groupListItem;
-		$data['pageInfo']['totalNum'] += count($groupListItem);
-		// pr($pathInfo,$data,$groupListItem);exit;
+	
+		$data['groupList'] = $this->groupArray($groupList);
+		$data['pageInfo']['totalNum'] += count($data['groupList']);
+		// pr($groupList,$data,$groupListItem);exit;
 		return $data;
 	}
 	
@@ -87,35 +88,34 @@ class explorerListGroup extends Controller{
 		$parents = $this->model->parentLevelArray($pathInfo['parentLevel']);
 		if(count($parents) != 0) return false;
 
-		// 不是第一页;
+		// 第一页才罗列;
 		$page = intval($this->in['page']);
 		$page = $page >= 1? $page:1;
 		if($page !=1) return false;
 		
-		// 企业网盘;不罗列子部门;
-		// if($pathInfo['targetID'] == '1') return false;
 		return true;
 	}
 
 	public function pathGroupAuth($groupID){
-		$groupInfo = $this->modelGroup->getInfoSimple($groupID);//101
-		return $this->pathGroupAuthMake($groupInfo['parentLevel']);
+		return $this->pathGroupAuthMake($groupID);
 	}
-	public function pathGroupAuthMake($parentLevel){
+	public function pathGroupAuthMake($groupID){
+		$groupInfo  = $this->modelGroup->getInfoSimple($groupID);//101
 		$selfGroup 	= Session::get("kodUser.groupInfo");
 		$selfGroup 	= array_to_keyvalue($selfGroup,'groupID');//自己所在的组
-		$parents = $this->model->parentLevelArray($parentLevel);
+		$parents = $this->model->parentLevelArray($groupInfo['parentLevel']);
 		$parents = array_reverse($parents);
 		foreach ($parents as $id) {
 			if($id == '1') return false;// 根部门;
 			if(isset($selfGroup[$id])){
 				return array(
-					'authValue' => $selfGroup[$id]['auth']['auth'],
-					'authInfo' => $selfGroup[$id]['auth'],
+					'authValue' => intval($selfGroup[$id]['auth']['auth']),
+					'authInfo'  => $selfGroup[$id]['auth'],
 				);
 			}
 		}
-		return false;
+		// return false;
+		return Model("SourceAuth")->authDeepCheck($groupInfo['sourceInfo']['sourceID']);
 	}
 
 	/**
@@ -124,13 +124,13 @@ class explorerListGroup extends Controller{
 	 */
 	public function pathRootCheck($action){
 		$disable = array(
-			'path' 		=> array(
+			'path' 	=> array(
 				'explorer.index.pathRename',
 				'explorer.userShare.add',
 				'explorer.userShare.get',
 				'explorer.userShare.edit',
 			),
-			'dataArr'	=> array(
+			'dataArr'=> array(
 				'explorer.index.pathDelete',
 				'explorer.index.pathCopy',
 				'explorer.index.pathCute',
@@ -175,7 +175,7 @@ class explorerListGroup extends Controller{
 		
 		$info = IO::infoSimple($path);
 		if($info['targetType'] != SourceModel::TYPE_GROUP) return false;
-		if($info['targetType'] != SourceModel::TYPE_USER) return false;
+		if($info['targetType'] != SourceModel::TYPE_USER)  return false;
 		if($info['parentID'] =='0') return true;//部门根目录,用户根目录;
 		// if(!$info || $info['targetType'] != 'group') return false;
 		return false;

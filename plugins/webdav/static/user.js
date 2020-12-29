@@ -1,8 +1,45 @@
 ClassBase.define({
 	init: function(param){
+		this.webdavPath = G.webdavOption.host;
 		this.initParentView(param);
 		this.initFormView(this.formData());
+		this.initPath();
 	},
+	
+	initPath: function(){
+		if(G.webdavOption.pathAllow == 'self'){
+			this.$('.item-openMore').remove();
+			return;
+		}
+
+		var tpl = '{{each dataList item}}\
+		<div class="row-item mb-10">\
+			<span class="title" style="display:inline-block;width:100px;">{{item.title}}:</span>\
+			<input type="text" value="{{item.value}}" readonly="" style="width:45%;">\
+			<span class="input-title input-title-right kui-btn" action="copy">\
+				<i class="font-icon icon-copy"></i>{{LNG["explorer.copy"]}}</span>\
+		</div>\
+		{{/each}}';
+		var data = [
+			{
+				title:LNG['explorer.toolbar.myDocument'],
+				value:this.webdavPath + urlEncode(LNG['explorer.toolbar.myDocument'])+'/'
+			},
+			{
+				title:LNG['explorer.toolbar.myGroup'],
+				value:this.webdavPath + urlEncode(LNG['explorer.toolbar.myGroup'])+'/'
+			}
+		];
+
+		var $content = this.$('.item-pathAllowMore .info-alert');
+		this.renderHtml(tpl,{dataList:data},$content);
+		$content.find('[action]').bind('click',function(){
+			var value = $(this).prev().val();
+			$.copyText(value);
+			Tips.tips(LNG['explorer.share.copied']);
+		});
+	},
+
 	formData:function(){
 		var pluginApi = API_HOST+'plugin/webdav/download';
 		return {
@@ -10,8 +47,25 @@ ClassBase.define({
 			"detailAddress":{
 				"type":"html",
 				"display":"<b>webdav "+LNG['common.address']+"</b>",
-				"value":"<input type='text' value='"+G.webdavHost+"' readonly style='width:70%;' />\
+				"value":"<input type='text' value='"+this.webdavPath+"' readonly style='width:70%;' />\
 				<span class='input-title input-title-right kui-btn' action='copy'><i class='font-icon icon-copy'></i>"+LNG['explorer.copy']+"</span>"
+			},
+			"openMore":{
+				"type":"button",
+				"className":"form-button-line",//横线腰线
+				"value":"",//默认值；同checkbox
+				"info":{
+					"1":{ //按钮名称
+						"display":LNG['webdav.user.morePath']+"<b class='caret'></b>",
+						"className":"btn-default btn-sm",
+						"attr":{"style":"margin-left:20%;"}
+					}
+				},
+				"switchItem":{"1":"pathAllowMore"}
+			},
+			"pathAllowMore":{
+				"display":"",
+				"value":"<div class='info-alert info-alert-grey p-10 align-left'></div><hr/>",
 			},
 			"help":{
 				"display":"<b>"+LNG['webdav.help.title']+"</b>","value":

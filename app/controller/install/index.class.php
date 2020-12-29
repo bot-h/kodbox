@@ -140,7 +140,6 @@ class installIndex extends Controller {
         $env = array(
             'path_writable'     => array(),
             'php_version'       => phpversion(),
-            // 'file_get_contents' => function_exists('file_get_contents') || false,
             'allow_url_fopen'   => ini_get('allow_url_fopen') || false,
             'php_bit'           => phpBuild64() ? 64 : 32,
             'iconv'             => function_exists('iconv') || false,
@@ -157,16 +156,13 @@ class installIndex extends Controller {
             !function_exists('imagecolorallocate')){
             $env['gd'] = false;
         }
-		$arr_check = array(
-            BASIC_PATH,
-			DATA_PATH,
-			DATA_PATH.'system',
-        );
-        $parent = get_path_father(BASIC_PATH);
-        foreach ($arr_check as $value) {
-            $path = str_replace($parent,'',$value);
-            $env['path_writable'][$path] = path_writeable($value) || false;
+        $pathWrt = true;
+		$pathList = array(BASIC_PATH, DATA_PATH, DATA_PATH.'system');
+        foreach ($pathList as $value) {
+            if(!path_writeable($value)) $pathWrt = false;
+            break;
         }
+        $env['path_writable'] = $pathWrt || rtrim(BASIC_PATH, '/');
         show_json($env);
     }
 

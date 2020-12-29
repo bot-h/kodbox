@@ -126,7 +126,7 @@ class adminAutoTask extends Controller {
 	public function taskSwitch(){
 		$data  = Input::getArray(array(
 			"status"	=> array("check"=>"bool"),
-			"delay"		=> array("check"=>"int","default"=>$delay),
+			"delay"		=> array("check"=>"int","default"=>10),
 		));
 		// Cache::deleteAll();
 		AutoTask::config($data['status'],$data['delay']);
@@ -134,5 +134,15 @@ class adminAutoTask extends Controller {
 	}
 	public function taskRestart(){
 		AutoTask::restart();
+	}
+
+	// 移动排序、拖拽排序
+	public function sort() {
+		$ids = Input::get('ids', 'require');
+		$ids = explode(',', $ids);
+		foreach($ids as $i => $id) {
+			$this->model->update($id,array("sort"=> $i));
+		}
+		show_json(LNG('explorer.success'));
 	}
 }

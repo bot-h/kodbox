@@ -16,7 +16,7 @@ $config['settings'] = array(
 	'downloadUrlTime'	=> 0,			 	//下载地址生效时间，按秒计算，0代表不限制
 	'apiLoginTonken'	=> '',			 	//设定则认为开启服务端api通信登录，同时作为加密密匙
 	'paramRewrite'		=> false,		 	//开启url 去除? 直接跟参数
-	'ioAvailed'			=> 'local,ftp,oss,qiniu,cos,s3,oos',		//显示的io类型，多个以','分隔
+	'ioAvailed'			=> 'local,ftp,oss,qiniu,cos,s3,oos,minio',		//显示的io类型，多个以','分隔
 	'ioFileOutServer'	=> false,
 	'ioUploadServer'	=> false,
 	
@@ -150,6 +150,7 @@ $config['settingSystemDefault'] = array(
 	'versionType'		=> "A",			// 版本
 	'rootListUser'		=> 0,			// 组织架构根节点展示群组内用户
 	'rootListGroup'		=> 0,			// 组织架构根节点展示子群组
+	'groupAuthOuther'   => 1, 			// 子部门网盘文档可授权给外部部门或成员,
 	'currentVersion'	=> KOD_VERSION, // 当前版本
 	'orderSort'         => 'desc',      // sort字段排序方式;默认从大到小
 
@@ -160,7 +161,7 @@ $config['settingSystemDefault'] = array(
 	'loginIpAllow'		=> '',			// 登陆允许的ip来源; ip白名单;
 	'csrfProtect'		=> '0',		 	// 开启csrf保护	
 	
-	'treeOpen'			=> 'my,myGroup,recentDoc,fileType,fileTag,driver',//树目录开启功能;
+	'treeOpen'			=> 'my,myFav,myGroup,rootGroup,recentDoc,fileType,fileTag,driver',//树目录开启功能;
 	'wallpageDesktop'	=> "1,2,3,4,5,6,7,8,9,10,11,12,13",
 	'wallpageLogin'		=> "2,3,6,8,9,11,12",
 	'emailType'			=> "0",			// 邮件方式
@@ -367,6 +368,7 @@ $config['authAllowAction'] = array(
 	'explorer.list.path','explorer.index.desktopApp',
 	'explorer.userShare.get',
 	'explorer.userShare.myShare',
+	'user.setting.notice',
 	
 	//临时，搜索分享中使用; 设置用户权限or设置用户部门；
 	'admin.role.get','admin.job.get','admin.auth.get',
@@ -410,11 +412,11 @@ $config['authRoleAction']= array(
 		'explorer.tag'=>'add,edit,remove,moveTop,moveBottom,resetSort,filesAddToTag,filesResetTag,filesRemoveFromTag',
 	),
 	
-	'admin.index.dashboard'	=> array('admin.analysis'=>'summary,table,trend'),
+	'admin.index.dashboard'	=> array('admin.analysis'=>'option,table,chart,trend'),
 	'admin.index.setting'	=> array('admin.setting'=>'get,set,clearCache,phpInfo'),
 	'admin.index.loginLog'	=> array('admin.log'=>'loginLogList'),
 	'admin.index.log'		=> array('admin.log'=>'get,typelist'),
-	'admin.index.server'	=> array('admin.'),
+	'admin.index.server'	=> array('admin.setting'=>'cacheGet,cacheCheck,cacheSave'),
 	
 	'admin.role.list'		=> array('admin.role'=>'get'),
 	'admin.role.edit'		=> array('admin.role'=>'add,edit,remove,sort'),

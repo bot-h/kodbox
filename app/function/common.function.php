@@ -1176,9 +1176,11 @@ function pr_replace_callback($matches){
 	return "\n".str_repeat(" ",strlen($matches[1])*2).$matches[2];
 }
 function pr_trace(){
-	$args = func_get_args();
-	$args[] = get_caller_info();
-	call_user_func('pr',$args);
+	$result = func_get_args();
+	$result['memory'] = sprintf("%.3fM",memory_get_usage()/(1024*1024));
+	$result['call'] = get_caller_info();
+	$result['sql']  = think_trace('[sql]');	
+	call_user_func('pr',$result);
 }
 
 function pr(){
@@ -1315,7 +1317,6 @@ function make_password(){
 	}
 	return md5($temp);
 }
-
 
 /**
  * php DES解密函数

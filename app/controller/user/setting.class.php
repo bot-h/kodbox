@@ -319,4 +319,12 @@ class userSetting extends Controller {
 		}
 		show_json($result['result'],true);
 	}
+	public function notice(){
+		$data	= Input::getArray(array(
+			'id'		=> array('default' => false),
+			'action'	=> array('check' => 'in', 'param' => array('get', 'edit', 'remove')),
+		));
+		$action = 'admin.notice.notice' . ucfirst($data['action']);
+		ActionCall($action, $data['id']);
+	}
 }

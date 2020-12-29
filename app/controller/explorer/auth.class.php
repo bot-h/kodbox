@@ -260,9 +260,14 @@ class explorerAuth extends Controller {
 	 */
 	private function checkAuthMethod($auth,$method){
 		if($GLOBALS['isRoot'] && $this->config["ADMIN_ALLOW_SOURCE"]) return true;
+		$auth = intval($auth);
 		if(!$auth || $auth == 0){
 			return $this->errorMsg(LNG('explorer.noPermissionAction'),1005);
 		}
+
+		//某文档有权限,打通上层文件夹通路;
+		if($method == 'show' && $auth === -1) return true;
+				
 		$method   = strtoupper(substr($method,0,1)).substr($method,1);
 		$method   = 'authCheck'.$method;
 		$allow = Model('Auth')->$method($auth);

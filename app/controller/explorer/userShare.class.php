@@ -72,9 +72,15 @@ class explorerUserShare extends Controller{
 		return $listSource;
 	}
 	
-	public function sharePathInfo($shareID){
+	// 分享内容属性; 默认$sourceID为空则分享本身属性; 指定则文件夹字内容属性;
+	public function sharePathInfo($shareID,$sourceID=false){
 		$shareInfo	= $this->model->getInfo($shareID);
-		$sourceInfo = Model('Source')->pathInfo($shareInfo['sourceID']);
+		if(!$sourceID){
+			$sourceInfo = Model('Source')->pathInfo($shareInfo['sourceID']);
+		}else{
+			$sourceInfo = Model('Source')->pathInfo($sourceID);
+		}
+		
 		if(!$this->shareIncludeCheck($shareInfo,$sourceInfo)) return false;
 		$sourceInfo = $this->_shareItemeParse($sourceInfo,$shareInfo);
 		return $sourceInfo;
