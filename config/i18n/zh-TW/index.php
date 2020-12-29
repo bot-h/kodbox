@@ -786,7 +786,7 @@ return array(
     "explorer.dbLoadAll"             => "雙擊加載全部……",
     "explorer.ziping"                => "正在壓縮...",
     "explorer.unziping"              => "正在解壓...",
-    "explorer.zipingTips"            => "解壓操作中,請稍後...",
+    "explorer.zipingTips"            => "壓縮操作中,請稍後...",
     "explorer.unzipingTips"          => "解壓操作中,請稍後...",
     "explorer.parsing"               => "解析獲取中...",
     "explorer.moving"                => "移動操作中...",

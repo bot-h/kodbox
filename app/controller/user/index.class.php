@@ -27,7 +27,6 @@ class userIndex extends Controller {
 		Hook::bind('beforeShutdown','user.index.shutdownEvent');
 	}
 	public function shutdownEvent(){
-		http_close();
 		CacheLock::unlockRuntime();// 清空异常时退出,未解锁的加锁;
 	}
 

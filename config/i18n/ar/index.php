@@ -786,7 +786,7 @@ return array(
     "explorer.dbLoadAll"             => "انقر نقرًا مزدوجًا لتحميل الكل ...",
     "explorer.ziping"                => "ضغط ...",
     "explorer.unziping"              => "إلغاء الضغط ...",
-    "explorer.zipingTips"            => "عملية فك الضغط ، يرجى الانتظار ...",
+    "explorer.zipingTips"            => "ضغط العملية ، يرجى الانتظار ...",
     "explorer.unzipingTips"          => "عملية فك الضغط ، يرجى الانتظار ...",
     "explorer.parsing"               => "استرجاع ...",
     "explorer.moving"                => "جارٍ نقل العملية ...",

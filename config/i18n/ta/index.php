@@ -786,7 +786,7 @@ return array(
     "explorer.dbLoadAll"             => "அனைத்தையும் ஏற்ற இருமுறை சொடுக்கவும் ...",
     "explorer.ziping"                => "அமுக்கி ...",
     "explorer.unziping"              => "குறைத்தல் ...",
-    "explorer.zipingTips"            => "செயல்பாட்டைக் குறைத்தல், தயவுசெய்து காத்திருங்கள் ...",
+    "explorer.zipingTips"            => "அமுக்க செயல்பாடு, தயவுசெய்து காத்திருங்கள் ...",
     "explorer.unzipingTips"          => "செயல்பாட்டைக் குறைத்தல், தயவுசெய்து காத்திருங்கள் ...",
     "explorer.parsing"               => "மீட்டெடுக்கிறது ...",
     "explorer.moving"                => "நகரும் செயல்பாடு ...",

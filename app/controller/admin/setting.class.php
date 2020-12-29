@@ -82,6 +82,31 @@ class adminSetting extends Controller {
 		show_json(count($listFile));
 	}
 	
+	
+	/**
+	 * 动态添加菜单;
+	 */
+	public function addMenu($options,$menu){
+		$menus = &$options['system']['options']['menu'];
+		$menusKeys = array_to_keyvalue($menus,'name');
+		if( isset($menusKeys[$menu['name']]) ) return $options;
+		
+		// 一级目录最多5个;超出自动添加到子目录;
+		$menuMax = 50;
+		$menuNum = 0;
+		$menus[] = $menu;
+		foreach ($menus as &$theMenu) {
+			if(!isset($theMenu['subMenu']) || $theMenu['subMenu'] == '0'){
+				$menuNum += 1;
+			}
+			if($menuNum >= $menuMax){
+				$theMenu['subMenu'] = 1;
+			}
+		}
+		
+		return $options;
+	}
+
 	public function clearCache() {
 		Cache::deleteAll();
 		del_dir(TEMP_PATH);

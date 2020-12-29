@@ -5,10 +5,11 @@ class adminerPlugin extends PluginBase{
 	}
 	public function regist(){
 		$this->hookRegist(array(
-			'templateCommonHeader' => 'adminerPlugin.addMenu'
+			'user.view.options.after' => 'adminerPlugin.addMenu',
 		));
 	}
-	public function addMenu(){
+
+	public function addMenu($options){
 		$config = $this->getConfig();
 		$menu = array(
 			'name'		=> 'Adminer',
@@ -18,8 +19,9 @@ class adminerPlugin extends PluginBase{
 			'subMenu'	=> $config['menuSubMenu'],
 			'use'		=> '1'
 		);
-		Action('admin/setting')->addMenu($menu);
+		return ActionCall('admin.setting.addMenu',$options,$menu);
 	}
+	
 	public function index(){
 		header('Location: '.$this->pluginHost.'adminer/index.php');
 	}

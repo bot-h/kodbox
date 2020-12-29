@@ -786,7 +786,7 @@ return array(
     "explorer.dbLoadAll"             => "Tümünü yüklemek için çift tıklayın ...",
     "explorer.ziping"                => "Sıkıştırılıyor ...",
     "explorer.unziping"              => "Sıkıştırma ...",
-    "explorer.zipingTips"            => "Sıkıştırma işlemi kaldırıldı, lütfen bekleyin ...",
+    "explorer.zipingTips"            => "Sıkıştırma işlemi, lütfen bekleyin ...",
     "explorer.unzipingTips"          => "Sıkıştırma işlemi kaldırıldı, lütfen bekleyin ...",
     "explorer.parsing"               => "Alınıyor ...",
     "explorer.moving"                => "İşlem taşınıyor ...",

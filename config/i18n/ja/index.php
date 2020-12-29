@@ -786,7 +786,7 @@ return array(
     "explorer.dbLoadAll"             => "ダブルクリックしてすべてをロードします...",
     "explorer.ziping"                => "圧縮しています...",
     "explorer.unziping"              => "解凍...",
-    "explorer.zipingTips"            => "解凍操作、お待ちください...",
+    "explorer.zipingTips"            => "操作を圧縮しています。お待ちください...",
     "explorer.unzipingTips"          => "解凍操作、お待ちください...",
     "explorer.parsing"               => "取得しています...",
     "explorer.moving"                => "移動操作...",

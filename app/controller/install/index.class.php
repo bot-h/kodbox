@@ -124,7 +124,8 @@ class installIndex extends Controller {
         $env = array(
             'path_writable'     => array(),
             'php_version'       => phpversion(),
-            'file_get_contents' => function_exists('file_get_contents') || false,
+            // 'file_get_contents' => function_exists('file_get_contents') || false,
+            'allow_url_fopen'   => ini_get('allow_url_fopen') || false,
             'php_bit'           => phpBuild64() ? 64 : 32,
             'iconv'             => function_exists('iconv') || false,
             'mb_string'         => function_exists('mb_convert_encoding') || false,

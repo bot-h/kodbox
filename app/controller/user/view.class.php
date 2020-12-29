@@ -57,7 +57,11 @@ class userView extends Controller{
 			$options['kod']['WEB_ROOT']   = WEB_ROOT;
 			$options['kod']['BASIC_PATH'] = BASIC_PATH;
 		}
-		$options = Hook::filter('user.view.options.before',$options);
+		
+		$optionsGet = Hook::filter('user.view.options.before',$options);
+		$options 	= is_array($optionsGet) ? $optionsGet : $options;
+		$optionsGet = Hook::filter('user.view.options.after',$options);
+		$options 	= is_array($optionsGet) ? $optionsGet : $options;
 		show_json($options);
 	}
 	

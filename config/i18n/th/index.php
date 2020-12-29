@@ -786,7 +786,7 @@ return array(
     "explorer.dbLoadAll"             => "ดับเบิลคลิกเพื่อโหลดทั้งหมด ...",
     "explorer.ziping"                => "กำลังบีบอัด ...",
     "explorer.unziping"              => "กำลังบีบอัด ...",
-    "explorer.zipingTips"            => "การคลายซิปกำลังดำเนินการโปรดรอสักครู่ ...",
+    "explorer.zipingTips"            => "กำลังดำเนินการบีบอัดโปรดรอ ...",
     "explorer.unzipingTips"          => "การคลายซิปกำลังดำเนินการโปรดรอสักครู่ ...",
     "explorer.parsing"               => "กำลังดึง ...",
     "explorer.moving"                => "กำลังย้ายการทำงาน ...",

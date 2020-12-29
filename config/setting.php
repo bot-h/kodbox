@@ -54,12 +54,12 @@ $config['cache'] = array(
 		// 'timeout'  => 20, 		// 连接超时时间
 		// 'auth' 	  => '',  		// 密码
 		// 'pconnect' => true,  	// 是否持久链接;
-		// 'servers'  => array('10.10.10.1:8001','10.10.10.2:8001'), //集群方式连接;有则忽略host/port
+		// 'server'  => array('10.10.10.1:8001','10.10.10.2:8001'), //集群方式连接;有则忽略host/port
     ),
     'memcached' => array(
         'host' 	   => '127.0.0.1',
 		'port' 	   => 11211,
-		// 'servers'=> array('10.10.10.1:8001','10.10.10.2:8001'), // 集群方式连接;有则忽略host/port
+		// 'server'=> array('10.10.10.1:8001','10.10.10.2:8001'), // 集群方式连接;有则忽略host/port
     ),
 );
 $config['databaseDefault'] = array(

@@ -662,7 +662,7 @@ function select_var($array){
  * @return array array
  */
 function parse_url_query($url){
-	$arr = parse_url($url);
+	$arr = mb_parse_url($url);
 	$queryParts = explode('&',$arr['query']);
 	$params = array();
 	foreach ($queryParts as $param) {
@@ -672,6 +672,27 @@ function parse_url_query($url){
         $params[$key] = implode('=', $item);
 	}
 	return $params;
+}
+
+function mb_parse_url($url, $component = -1) {
+	$encodedUrl = preg_replace_callback(
+		'%[^:/?#&=\.]+%usD',
+		function ($matches) {
+			return urlencode($matches[0]);
+		},
+		$url
+	);
+	$components = parse_url($encodedUrl, $component);
+	if (is_array($components)) {
+		foreach ($components as &$part) {
+			if (is_string($part)) {
+				$part = urldecode($part);
+			}
+		}
+	} else if (is_string($components)) {
+		$components = urldecode($components);
+	}
+	return $components;
 }
 
 function stripslashes_deep($value){

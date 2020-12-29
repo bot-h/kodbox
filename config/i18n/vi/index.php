@@ -786,7 +786,7 @@ return array(
     "explorer.dbLoadAll"             => "Nhấp đúp để tải tất cả ...",
     "explorer.ziping"                => "Nén ...",
     "explorer.unziping"              => "Giải nén ...",
-    "explorer.zipingTips"            => "Giải nén hoạt động, vui lòng đợi ...",
+    "explorer.zipingTips"            => "Hoạt động nén, vui lòng đợi ...",
     "explorer.unzipingTips"          => "Giải nén hoạt động, vui lòng đợi ...",
     "explorer.parsing"               => "Lấy ...",
     "explorer.moving"                => "Di chuyển hoạt động ...",

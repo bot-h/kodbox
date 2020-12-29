@@ -296,13 +296,15 @@ class explorerIndex extends Controller{
 	 */
 	public function fileDownloadRemove(){
 		$path = Input::get('path', 'require');
-		$name = $this->pathCrypt($path,false);
-		if(!$name || !@file_exists(TEMP_FILES.$name)) {
+		$path = $this->pathCrypt($path,false);
+		if(!$path || !IO::exist($path)) {
 			show_json(LNG('common.pathNotExists'), false);
 		}
-		$this->in = array('path' => TEMP_FILES.$name,'download' => 1);
-		$this->fileOut();
-		del_dir(get_path_father(TEMP_FILES.$name));
+		IO::fileOut($path,true);
+		$dir = get_path_father($path);
+		if(strstr($dir,TEMP_FILES)){
+		    del_dir($dir);
+		}
 	}
 
 	private function tmpZipName($dataArr){
@@ -334,34 +336,22 @@ class explorerIndex extends Controller{
 	 */
 	public function zipDownload(){	
 		ignore_timeout();
-		$dataArr = json_decode($this->in['dataArr'],true);
+		$dataArr  = json_decode($this->in['dataArr'],true);
 		$downName = $this->tmpZipName($dataArr);
-		$zipCache = TEMP_FILES;
-		mk_dir($zipCache);
+		$zipCache = TEMP_FILES;mk_dir($zipCache);
 
-		$zipname = Cache::get($downName);
-		if($zipname && @file_exists($zipname) ){
-			show_json(LNG('explorer.zipSuccess'),true,$this->pathCrypt($downName . '/' . $zipname));
+		$zipPath = Cache::get($downName);
+		if($zipPath && IO::exist($zipPath) ){
+			show_json(LNG('explorer.zipSuccess'),true,$this->pathCrypt($zipPath));
 		}
 
-		$downFile = $this->zip($zipCache . $downName . '/');
-		$zipname  = get_path_this($downFile);
-		Cache::set($downName, $zipname, 3600*6);
-		// 3.删除临时目录下（非压缩）文件
-		$dirs = $files = array();
-		recursion_dir($zipCache . $downName, $dirs, $files, 0);
-		foreach($dirs as $dir){
-			del_dir($dir);
-		}
-		foreach($files as $file){
-			if($file == $downFile) continue;
-			del_file($file);
-		}
-		show_json(LNG('explorer.zipSuccess'),true,$this->pathCrypt($downName . '/' . $zipname));
+		$zipPath = $this->zip($zipCache.$downName . '/');
+		Cache::set($downName, $zipPath, 3600*6);
+		show_json(LNG('explorer.zipSuccess'),true,$this->pathCrypt($zipPath));
 	}
 	// 文件名加解密
 	public function pathCrypt($path, $en=true){
-		$pass = Model('SystemOption')->get('systemPassword');
+		$pass = Model('SystemOption')->get('systemPassword').'encode';
 		return $en ? Mcrypt::encode($path,$pass) : Mcrypt::decode($path,$pass);
 	}
 

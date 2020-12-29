@@ -786,7 +786,7 @@ return array(
     "explorer.dbLoadAll"             => "두 번 클릭하여 모두로드 ...",
     "explorer.ziping"                => "압축 ...",
     "explorer.unziping"              => "압축 풀기 ...",
-    "explorer.zipingTips"            => "압축 해제 작업을 기다려주십시오 ...",
+    "explorer.zipingTips"            => "압축 작업을 기다려주십시오 ...",
     "explorer.unzipingTips"          => "압축 해제 작업을 기다려주십시오 ...",
     "explorer.parsing"               => "검색 중 ...",
     "explorer.moving"                => "이동 작업 ...",

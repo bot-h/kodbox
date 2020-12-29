@@ -786,7 +786,7 @@ return array(
     "explorer.dbLoadAll"             => "সমস্ত লোড করতে ডাবল ক্লিক করুন ...",
     "explorer.ziping"                => "সংকোচন করা হচ্ছে ...",
     "explorer.unziping"              => "সঙ্কোচন ...",
-    "explorer.zipingTips"            => "অপসারণের ক্রিয়াকলাপ, দয়া করে অপেক্ষা করুন ...",
+    "explorer.zipingTips"            => "কমপ্রেসিং অপারেশন, দয়া করে অপেক্ষা করুন ...",
     "explorer.unzipingTips"          => "অপসারণের ক্রিয়াকলাপ, দয়া করে অপেক্ষা করুন ...",
     "explorer.parsing"               => "পুনরুদ্ধার করা হচ্ছে ...",
     "explorer.moving"                => "চলমান অপারেশন ...",

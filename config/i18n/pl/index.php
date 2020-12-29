@@ -786,7 +786,7 @@ return array(
     "explorer.dbLoadAll"             => "Kliknij dwukrotnie, aby załadować wszystkie ...",
     "explorer.ziping"                => "Kompresowanie ...",
     "explorer.unziping"              => "Dekompresowanie ...",
-    "explorer.zipingTips"            => "Rozpakowanie operacji, proszę czekać ...",
+    "explorer.zipingTips"            => "Kompresowanie, proszę czekać ...",
     "explorer.unzipingTips"          => "Rozpakowanie operacji, proszę czekać ...",
     "explorer.parsing"               => "Pobieranie ...",
     "explorer.moving"                => "Przenoszenie operacji ...",
