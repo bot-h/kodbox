@@ -90,20 +90,15 @@ class adminSetting extends Controller {
 		$menus = &$options['system']['options']['menu'];
 		$menusKeys = array_to_keyvalue($menus,'name');
 		if( isset($menusKeys[$menu['name']]) ) return $options;
-		
-		// 一级目录最多5个;超出自动添加到子目录;
-		$menuMax = 50;
-		$menuNum = 0;
-		$menus[] = $menu;
+
+		$menus[] = $menu;$menuNum = 0;
 		foreach ($menus as &$theMenu) {
 			if(!isset($theMenu['subMenu']) || $theMenu['subMenu'] == '0'){
 				$menuNum += 1;
 			}
-			if($menuNum >= $menuMax){
-				$theMenu['subMenu'] = 1;
-			}
+			// 一级目录最多5个;超出自动添加到子目录; 前端自适应处理
+			// if($menuNum >= 5){$theMenu['subMenu'] = 1;}
 		}
-		
 		return $options;
 	}
 

@@ -1,2 +1,2 @@
 <?php
-define('KOD_VERSION','1.04');
+define('KOD_VERSION','1.05');

@@ -286,7 +286,7 @@ class explorerIndex extends Controller{
 			}
 		}
 		$msg= $copyType == 'copy'?LNG('explorer.pastSuccess').$error:LNG('explorer.cutePastSuccess').$error;
-		$code = ($error ==''?true:false);
+		$code = $error =='' ?true:false;
 		show_json($msg,$code,$result);
 	}
 
@@ -417,8 +417,33 @@ class explorerIndex extends Controller{
 		if(isset($this->in['type']) && $this->in['type'] == 'image'){
 			return IO::fileOutImage($path,$this->in['width']);
 		}
+		if($isDownload) Hook::trigger('explorer.fileDownload', $path);
 		$this->updateLastOpen($path);
 		IO::fileOut($path,$isDownload);
+	}
+	/*
+	相对某个文件访问其他文件; 权限自动处理;支持source,分享路径,io路径,物理路径;
+	path={source:1138926}/&add=images/as.png; path={source:1138926}/&add=as.png
+	path={shareItem:123}/1138934/&add=images/as.png
+	*/
+	public function fileOutBy(){
+		if(!$this->in['path']) return; 
+		
+		// 拼接转换相对路径;
+		$io = IO::init($this->in['path']);
+		$parent = $io->getPathOuter($io->pathFather($io->path));
+		$find   = $parent.'/'.$this->in['add'];
+		$find   = KodIO::clear(str_replace('./','/',$find));
+		$info   = IO::infoFull($find);
+		// pr($parent,$find,$info,IO::info($this->in['path']));exit;
+		if(!$info || $info['type'] != 'file'){
+			return show_json(LNG('common.pathNotExists'),false);
+		}
+
+		$dist = $info['path'];
+		ActionCall('explorer.auth.canView',$dist);
+		$this->updateLastOpen($dist);
+		IO::fileOut($dist,false);
 	}
 	
 	/**

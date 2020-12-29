@@ -746,6 +746,14 @@ function parse_incoming(){
     $router = join('',$arr[0]);
     $router = str_replace('/','.',$router);
 	$remote = explode('.',$router);
+
+	// 微信等追加到根地址后面参数情况处理;  domain.com/?a=1&b=2; 
+	if( count($remote) == 1 && 
+		$remote[0] == $router &&
+		$return[$router] !='' ){
+		$router = '';
+		$remote = array('');
+	}
 	
 	$return['URLrouter'] = $router;
 	$return['URLremote'] = $remote;
@@ -1080,7 +1088,8 @@ function get_file_mime($ext){
 		"fif" => "application/fractals",
 		"flr" => "x-world/x-vrml",
 		"flv" => "video/x-flv",
-		"f4v" => "application/octet-stream",
+		"f4v" => "video/x-flv",
+		// "f4v" => "application/octet-stream",
 		"gif" => "image/gif",
 		"gtar" => "application/x-gtar",
 		"gz" => "application/x-gzip",
@@ -1120,6 +1129,8 @@ function get_file_mime($ext){
 		"mht" => "message/rfc822",
 		"mhtml" => "message/rfc822",
 		"mid" => "audio/mid",
+		"mka" => "audio/x-matroska",
+		"mkv" => "video/x-matroska",
 		"mny" => "application/x-msmoney",
 		"mov" => "video/quicktime",
 		"movie" => "video/x-sgi-movie",
