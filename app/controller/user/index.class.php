@@ -110,7 +110,7 @@ class userIndex extends Controller {
 				Session::destory();
 				show_json('user data error!',ERROR_CODE_LOGOUT);
 			}
-			Session::set('kodUser',$this->user);
+			Session::set('kodUser',$findUser);
 		}
 		if (!$this->user) {
 			show_json('user data error!',ERROR_CODE_LOGOUT);
@@ -125,6 +125,15 @@ class userIndex extends Controller {
 		if($role['administrator'] == '1'){
 			$GLOBALS['isRoot'] = 1;
 		}
+		
+		// 计划任务处理; 目录读写所有者为系统;
+		if( strtolower(ACTION) == 'user.view.call'){
+			define('USER_ID','0');
+			define('MY_HOME','');
+			define('MY_DESKTOP','');
+			return;
+		}
+				
 		define('USER_ID',$this->user['userID']);
 		define('MY_HOME',KodIO::make($this->user['sourceInfo']['sourceID']));
 		define('MY_DESKTOP',KodIO::make($this->user['sourceInfo']['desktop']));
@@ -236,6 +245,7 @@ class userIndex extends Controller {
 		$third = is_array($third) ? $third : json_decode($third, true);
 
 		// 判断执行结果
+		if(isset($third['avatar'])) $third['avatar'] = rawurldecode($third['avatar']);
 		Action('user.bind')->bindWithApp($third);
 		return show_json('ok',true,$this->accessToken());
 	}
@@ -294,5 +304,14 @@ class userIndex extends Controller {
 		$user = Model('User')->getInfo($userID);
 		if(!$user) return false;
 		return md5($user['password'] . $pass . $userID);
+	}
+
+	// 系统维护中
+	public function maintenance($update=false,$value=0){
+		// Model('SystemOption')->set('maintenance',0);exit;
+		if($update) return Model('SystemOption')->set('maintenance', $value);
+		// 管理员or未启动维护，返回
+		if($GLOBALS['isRoot'] || !Model('SystemOption')->get('maintenance')) return;
+		show_tips(LNG('common.maintenanceTips'), '','',LNG('common.tips'));
 	}
 }

@@ -2,7 +2,8 @@
 <head>
 	<meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=no" />
 	<meta charset="utf-8">
-	<link rel="stylesheet" href="<?php echo STATIC_PATH;?>style/lib/main.css" type="text/css">
+	<?php $this->link('style/lib/main.css','static');?>
+	<?php $this->link('style/dist/main.css','static');?>
 	<title><?php echo $fileName;?></title>
 	<style>
 		body {margin: 0;font-family: "Helvetica Neue Light", "Segoe UI Semilight", sans-serif;}
@@ -47,7 +48,7 @@
 <body>
 	<div class="load-content display">
 		<div class="app-icon">
-			<img src="<?php echo "{$this->pluginHost}/static/images/icon.png";?>" />
+			<img src="<?php $this->url('static/images/icon.png');?>" />
 			<div class="app-name"><?php echo LNG('yzOffice.meta.name');?></div>
 			<div class="load-status">
 				<div class="progress-text alert"><?php echo LNG('yzOffice.Main.transfer');?></div>
@@ -67,8 +68,8 @@
 	</div>
 	<div id="MyViewerDiv"></div>
 </body>
-	<script src="<?php echo STATIC_PATH;?>app/dist/vendor.js"></script>
-	<script src="<?php echo STATIC_PATH;?>app/dist/lib.js"></script>
+	<?php $this->link('app/dist/vendor.js','static');?>
+	<?php $this->link('app/dist/lib.js','static');?>
 	<script type="text/javascript">
 		var LNG = {
 			"error":"<?php echo LNG('explorer.error');?>",
@@ -135,12 +136,12 @@
 							loadError(LNG['yzOffice.Main.uploadError']);
 						}
 
-						var sizeTotal = pathTools.fileSize(stepInfo.sizeTotal);
-						var sizeSuccess = pathTools.fileSize(stepInfo.sizeSuccess);
-						var speed = pathTools.fileSize(stepInfo.speed)+'/s';
+						var sizeTotal = pathTools.fileSize(stepInfo.taskTotal);
+						var sizeSuccess = pathTools.fileSize(stepInfo.taskFinished);
+						var speed = pathTools.fileSize(stepInfo.taskSpeed)+'/s';
 						$('.progress-slider .left').html(sizeSuccess+'/'+sizeTotal+' ('+speed+')');//12.6M/25.3M (1.2M/s)
-						$('.progress-slider .right').html(_.floor((stepInfo.progress*100),1)+"%");
-						$('.progress-bar').css('width',(stepInfo.progress*100)+"%");
+						$('.progress-slider .right').html(_.floor((stepInfo.taskPercent*100),1)+"%");
+						$('.progress-bar').css('width',(stepInfo.taskPercent*100)+"%");
 					}else if(step.name == 'convertProcess'){
 						$('.progress-slider').addClass('hidden');
 						$('.progress-text').html(LNG['gstarCAD.Main.conver']);

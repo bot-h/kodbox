@@ -2,7 +2,7 @@
 	"id":"webdav",
 	"name":"{{LNG['webdav.meta.name']}}",
 	"title":"{{LNG['webdav.meta.title']}}",
-	"version":"1.07",
+	"version":"1.08",
 	"source":{
 		"className":" font-icon icon-hard-drive1 bg-yellow-6",
 		"icon":""
@@ -18,6 +18,11 @@
 		"pluginAuthOpen":{
 			"type":"switch",
 			"value":1,
+            "className":"hidden"
+		},
+		"webdavName":{
+			"type":"input",
+			"value":"kodbox",
             "className":"hidden"
 		},
 		"isOpen":{
@@ -61,7 +66,8 @@
 		},
 		"detailConnect":{
 			"display":"",
-			"value":"<div class='kui-btn kui-btn-blue goto-connect-webdav'>{{LNG['webdav.help.connect']}}</div></p>"
+			"value":"<div class='kui-btn kui-btn-blue goto-connect-webdav' 
+					 link-href='#setting/user/webdav'>{{LNG['webdav.help.connect']}}</div></p>"
 		},
 	}
 }

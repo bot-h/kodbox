@@ -14,6 +14,7 @@ class explorerListGroup extends Controller{
 
 	public function groupSelf($pathInfo){//获取组织架构的用户和子组织；
 		$groupInfo 	= Session::get("kodUser.groupInfo");
+		$groupInfo  = array_sort_by($groupInfo,'groupID');
 		return $this->groupArray($groupInfo);
 	}
 	
@@ -33,45 +34,31 @@ class explorerListGroup extends Controller{
 	// 根据多个部门信息,构造部门item;
 	private function groupArray($groupInfo){
 		$groupInfo 	= array_to_keyvalue($groupInfo,'groupID');//自己所在的组
-		$group 		= array_remove_value(array_keys($groupInfo),'1');
+		$group 		= array_remove_value(array_keys($groupInfo),1);
 		if(!$group) return array();
 
-		$where = array("groupID"=>array('in',$group));
-		$groupArry	 = Model('Group')->where($where)->select();
 		$groupSource = $this->model->sourceRootGroup($group);
-		$groupList 	 = array();
-
-		foreach($groupArry as $val){
-			$groupID = $val['groupID'];
+		$groupSource = array_to_keyvalue($groupSource,'targetID');
+		$result = array();
+		foreach($groupInfo as $group){ // 保持部门查询结构的顺序;
+			$groupID = $group['groupID'];
 			if($groupID == '1') continue; // 去除根部门
-			$auth = $this->pathGroupAuthMake($val['parentLevel'].$groupID.',');
+			if(!isset($groupSource[$groupID])) continue;
+			
+			$pathInfo = $groupSource[$groupID];			
+			// $pathInfo['name'] = '['.$pathInfo['name'].']';
+			$pathInfo['sourceRoot'] = 'groupPath';
+			$pathInfo['pathDisplay']= $pathInfo['groupPathDisplay'];
 			if(!$GLOBALS['isRoot']){
-				if( !$auth || $auth['authValue'] == 0){
+				if( !$pathInfo['auth'] || $pathInfo['auth']['authValue'] == 0){
 					continue;// 没有权限;
 				}
 			}
-			
-			$groupList[] = array(
-				'name'      		=> '['.$val['name'].']',
-				'path' 				=> $groupSource[$groupID],
-				'isParent'			=> true,
-				"sourceRoot"		=> 'groupPath',	//为部门根目录
-				'type'				=> 'folder',
-				'hasChildFolder'	=> true,
-				'hasChildFile'		=> true,
-				
-				'size'				=> $val['sizeUse'],
-				'createTime'		=> $val['createTime'],
-				'modifyTime'		=> $val['modifyTime'],
-				'groupParentLevel'	=> $val['parentLevel'],
-				'groupParentID'		=> $val['parentID'],
-				'groupID'			=> $val['groupID'],
-				'auth'				=> $auth,
-			);
+			$result[] = $pathInfo;
 		}
-		$this->pathGroupAppendPath($groupList);
-		// pr($groupList);exit;
-		return $groupList;
+
+		// pr($groupList,$groupInfo,$groupSource);exit;
+		return $result;
 	}
 	
 	
@@ -108,53 +95,6 @@ class explorerListGroup extends Controller{
 		// 企业网盘;不罗列子部门;
 		// if($pathInfo['targetID'] == '1') return false;
 		return true;
-	}
-
-	/**
-	 * 部门列表追加部门上下层级关系;
-	 */
-	private function pathGroupAppendPath(&$list){
-		$pathNameArray = array();
-		foreach ($list as &$item) {
-			$pathNameArray[$item['groupID']] = $item['name'];//缓存一部分目录名
-			$parents = $this->model->parentLevelArray($item['groupParentLevel']);
-			foreach ($parents as $theID) {
-				if(!isset($pathNameArray[$theID])){
-					$pathNameArray[$theID] = 0;
-				}
-			}
-		}
-		//需要查询文档名称的id列表
-		$needSelectID = array();
-		foreach ($pathNameArray as $key => $value) {
-			if(!$value){
-				$needSelectID[] = $key;
-			}
-		}
-		if($needSelectID){
-			//查询并依次整理相关文档的名称；
-			$where = array("groupID"=>array("in",$needSelectID));
-			$sourceInfo = $this->modelGroup->field("groupID,name")->where($where)->select();
-			$sourceName = array_to_keyvalue($sourceInfo,'groupID','name');
-			$pathNameArray = array_merge_index($pathNameArray,$sourceName);//array_merge 会重建key序号
-		}
-		//拼接为地址
-		foreach ($list as &$item) {
-			$parents = $this->model->parentLevelArray($item['groupParentLevel']);
-			$path = '';
-			foreach ($parents as $theID) {
-				if(isset($pathNameArray[$theID])){
-					$path .= '['.$pathNameArray[$theID].']/';
-				}
-			}
-			$path .= '['.$item['name'].']';
-			$item['pathDisplay'] = str_replace('//','/',$path);
-			if($item['auth']){
-				$item['isWriteable'] = AuthModel::authCheckEdit($item['auth']['authValue']);
-				$item['isReadable']  = AuthModel::authCheckView($item['auth']['authValue']);
-			}
-		}
-		// pr($list,$needSelectID,$pathNameArray);exit;
 	}
 
 	public function pathGroupAuth($groupID){
@@ -233,7 +173,9 @@ class explorerListGroup extends Controller{
 		$parse = KodIO::parse($path);
 		if($parse['type'] != KodIO::KOD_SOURCE) return false;
 		
-		$info = IO::info($path);
+		$info = IO::infoSimple($path);
+		if($info['targetType'] != SourceModel::TYPE_GROUP) return false;
+		if($info['targetType'] != SourceModel::TYPE_USER) return false;
 		if($info['parentID'] =='0') return true;//部门根目录,用户根目录;
 		// if(!$info || $info['targetType'] != 'group') return false;
 		return false;

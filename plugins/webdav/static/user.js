@@ -4,14 +4,13 @@ ClassBase.define({
 		this.initFormView(this.formData());
 	},
 	formData:function(){
-		var address   = G.kod.APP_HOST+'index.php/plugin/webdav/kodbox/';
 		var pluginApi = API_HOST+'plugin/webdav/download';
 		return {
 			"formStyle":{"hideSave":"1",className:"form-box-title-block "},
 			"detailAddress":{
 				"type":"html",
 				"display":"<b>webdav "+LNG['common.address']+"</b>",
-				"value":"<input type='text' value='"+address+"' readonly style='width:70%;' />\
+				"value":"<input type='text' value='"+G.webdavHost+"' readonly style='width:70%;' />\
 				<span class='input-title input-title-right kui-btn' action='copy'><i class='font-icon icon-copy'></i>"+LNG['explorer.copy']+"</span>"
 			},
 			"help":{

@@ -12,11 +12,11 @@ class userBind extends Controller {
 	const BIND_META_UNIONID = 'Unionid';
 	private $addUser;
 	private $withApp;
-	private static $TYPE_LIST = array();
+	public $typeList = array();
 
 	public function __construct() {
 		parent::__construct();
-		SELF::$TYPE_LIST = array(
+		$this->typeList = array(
 			'qq' => 'QQ',
 			'github' => 'GitHub',
 			'weixin' => LNG('common.wechat')
@@ -38,7 +38,7 @@ class userBind extends Controller {
 			'data'		 => array('check' => 'require')
 		));
 		$type = $input['type'];
-		if (!isset(SELF::$TYPE_LIST[$type])) {
+		if (!isset($this->typeList[$type])) {
 			show_json(LNG('common.invalidRequest'), false);
 		}
 		// 验证签名
@@ -101,7 +101,7 @@ class userBind extends Controller {
 	 */
 	public function bind(){
 		$data = Input::getArray(array(
-			'type'		=> array('check' => 'in', 'param' => array_keys(SELF::$TYPE_LIST)),
+			'type'		=> array('check' => 'in', 'param' => array_keys($this->typeList)),
 			'openid' 	=> array('check' => 'require'),
 			'unionid' 	=> array('check' => 'require'),
 			'nickName' 	=> array('check' => 'require'),
@@ -258,11 +258,11 @@ class userBind extends Controller {
 		$act = $msgData[0];
 		$msg = isset($msgData[1]) ? $msgData[1] : '';
 		if ($success) {
-			return LNG('common.congrats') . SELF::$TYPE_LIST[$type] . LNG('common.' . $act . 'Success');
+			return LNG('common.congrats') . $this->typeList[$type] . LNG('common.' . $act . 'Success');
 		}
-		$errTit = LNG('common.sorry') . SELF::$TYPE_LIST[$type];
+		$errTit = LNG('common.sorry') . $this->typeList[$type];
 		if ($act == 'login') {
-			return $errTit . LNG('common.loginError') . ';'.SELF::$TYPE_LIST[$type] . LNG('user.thirdBindFirst');
+			return $errTit . LNG('common.loginError') . ';'.$this->typeList[$type] . LNG('user.thirdBindFirst');
 		}
 		// 2.2 尚未启用
 		if ($act == 'invalid') {
@@ -272,7 +272,7 @@ class userBind extends Controller {
 		$errList = array(
 			'sign_error'	 => LNG('user.bindSignError'),
 			'update_error'	 => LNG('user.bindUpdateError'),
-			'bind_others'	 => SELF::$TYPE_LIST[$type] . LNG('user.bindOthers') . "[{$msgData[2]}]"
+			'bind_others'	 => $this->typeList[$type] . LNG('user.bindOthers') . "[{$msgData[2]}]"
 		);
 		return $errTit . LNG('common.bindError') .';' . (isset($errList[$msg]) ? $errList[$msg] : $msg);
 	}
@@ -287,7 +287,7 @@ class userBind extends Controller {
 	private function bindHtml($type, $data, $success, $msgData) {
 		$return = array(
 			'type'		 => $type, // 绑定类型
-			'typeTit'	 => SELF::$TYPE_LIST[$type], // 绑定类型名称
+			'typeTit'	 => $this->typeList[$type], // 绑定类型名称
 			'success'	 => (int) $success, // 绑定结果
 			'bind'		 => $data['bind'], // 是否已绑定
 			'client'	 => (int) $data['client'], // 前后端
@@ -571,7 +571,7 @@ class userBind extends Controller {
 			'client' 	=> array('default' => 1),
 			'platform'	=> array('default' => 'open'),
 		));
-		if (!isset(self::$TYPE_LIST[$data['type']])) {
+		if (!isset($this->typeList[$data['type']])) {
 			show_json(LNG('common.invalidParam'), false);
 		}
 
@@ -608,15 +608,15 @@ class userBind extends Controller {
 	 */
 	public function unbind() {
 		$type = Input::get('type','require', '');
-		if(!isset(SELF::$TYPE_LIST[$type])){
+		if(!isset($this->typeList[$type])){
 			show_json(LNG('user.bindTypeError'), false);
 		}
 		$info = Session::get('kodUser');
 		if($this->isEmptyPwd($info['userID'])) show_json(LNG('user.unbindWarning'), false);
 
 		Model('User')->startTrans();
-		$del = Model('User')->metaSet($info['userID'], $type . SELF::BIND_META_INFO);
-		$del = Model('User')->metaSet($info['userID'], $type . SELF::BIND_META_UNIONID);
+		$del = Model('User')->metaSet($info['userID'], $type . self::BIND_META_INFO);
+		$del = Model('User')->metaSet($info['userID'], $type . self::BIND_META_UNIONID);
 		Model('User')->commit();
 
 		if ($del === false) {
@@ -635,7 +635,7 @@ class userBind extends Controller {
 	 */
 	private function isBind($key, $unionid, $client = 1) {
 		// 根据metadata.unionid获取用户信息
-		$user = Model('User')->getInfoByMeta($key . SELF::BIND_META_UNIONID, $unionid);
+		$user = Model('User')->getInfoByMeta($key . self::BIND_META_UNIONID, $unionid);
 		if (empty($user)) return false;
 		// 后端,要判断该微信/QQ是否已经绑定了其他账号
 		// 通过绑定信息获取到的用户，不是当前登录用户，说明已绑定其他账号
@@ -659,8 +659,8 @@ class userBind extends Controller {
 		if($back) Model("User")->userEdit($userID, array("avatar" => $data['avatar']));
 
 		$metadata = array(
-			$data['type'] . SELF::BIND_META_UNIONID	 => $data['unionid'],
-			$data['type'] . SELF::BIND_META_INFO	 => json_encode($data)
+			$data['type'] . self::BIND_META_UNIONID	 => $data['unionid'],
+			$data['type'] . self::BIND_META_INFO	 => json_encode($data)
 		);
 		$ret = Model('User')->metaSet($userID, $metadata);
 		if ($ret && !$data['client']) {

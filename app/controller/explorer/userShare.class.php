@@ -72,9 +72,9 @@ class explorerUserShare extends Controller{
 		return $listSource;
 	}
 	
-	public function sharePathInfo($shareID,$sourceID){
+	public function sharePathInfo($shareID){
 		$shareInfo	= $this->model->getInfo($shareID);
-		$sourceInfo = Model('Source')->pathInfo($sourceID);
+		$sourceInfo = Model('Source')->pathInfo($shareInfo['sourceID']);
 		if(!$this->shareIncludeCheck($shareInfo,$sourceInfo)) return false;
 		$sourceInfo = $this->_shareItemeParse($sourceInfo,$shareInfo);
 		return $sourceInfo;

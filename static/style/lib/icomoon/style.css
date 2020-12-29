@@ -9,6 +9,17 @@
   font-style: normal;
 }
 
+/* @font-face {
+	font-family: 'EmojiOne';
+	src:  url('./EmojiOneColor.otf') format("opentype");
+	font-display:swap;
+}
+.emoji-text{
+	font-family:"EmojiOne","Helvetica Neue","Helvetica",
+	"Microsoft Yahei","微软雅黑","Lantinghei SC","STXihei","WenQuanYi Micro Hei",Arial,sans-serif !important;
+} */
+
+
 [class^="icon-"], [class*=" icon-"] {
   /* use !important to prevent issues with browser extensions that change fonts */
   font-family: 'icomoon' !important;

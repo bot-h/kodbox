@@ -61,7 +61,8 @@ class userView extends Controller{
 			$api = $options['system']['settings']['kodApiServer'];
 			$options['system']['settings']['kodApiServer'] = str_replace('http://','https://',$api);
 		}
-		
+
+		$options    = $this->parseMetaLang($options);
 		$optionsGet = Hook::filter('user.view.options.before',$options);
 		$options 	= is_array($optionsGet) ? $optionsGet : $options;
 		$optionsGet = Hook::filter('user.view.options.after',$options);
@@ -69,6 +70,22 @@ class userView extends Controller{
 		$options    = $this->parseMenu($options);
 		show_json($options);
 	}
+	private function parseMetaLang($options){
+		$sourceMeta = $options['system']['settings']['sourceMeta'];
+		$sourceMeta['user_sourceAlias']['display'] = LNG("meta.user_sourceAlias");
+		$sourceMeta['user_sourceAlias']['info']['title'] = LNG("meta.user_sourceAlias");
+		
+		$sourceMeta['user_fileEncodeType']['display']   = LNG("meta.user_fileEncodeType");
+		$sourceMeta['user_fileEncodeType']['info']['A'] = LNG("meta.user_fileEncodeType.A");
+		$sourceMeta['user_fileEncodeType']['info']['B'] = LNG("meta.user_fileEncodeType.B");
+		$sourceMeta['user_fileEncodeType']['info']['C'] = LNG("meta.user_fileEncodeType.C");
+		
+		$sourceMeta['user_sourceNumber']['display']  	 = LNG("meta.user_sourceNumber");
+		$sourceMeta['user_sourceParticipant']['display'] = LNG("meta.user_sourceParticipant");
+		$options['system']['settings']['sourceMeta'] = $sourceMeta;
+		return $options;
+	}
+	
 	
 	/**
 	 * 根据权限设置筛选菜单;
@@ -112,6 +129,7 @@ class userView extends Controller{
 	public function call(){
 		http_close();
 		ActionCall('explorer.index.clearCache');
+		AutoTask::start();
 		Cache::clearTimeout();
 	}
 	
@@ -139,7 +157,7 @@ class userView extends Controller{
 		$url = $this->in['url'];
 		if (function_exists('imagecolorallocate')) {
 			ob_get_clean();
-			QRcode::png($this->in['url']);
+			QRcode::png($this->in['url'],false,QR_ECLEVEL_L,7,2);
 		} else {
 			header('location: http://qr.topscan.com/api.php?text=' . rawurlencode($url));
 		}

@@ -3,7 +3,7 @@ var jplayerTemplateMovie =
 	<div class="playerScreen">\
 		<div class="jPlayer-container"></div>\
 		<div class="jPlayerMask"></div>\
-		<a href="javascript:void(0);" class="video-play disable-ripple"><i class="play-icon icon-play-sign"></i></a>\
+		<a href="javascript:void(0);" class="video-play disable-ripple"><i class="play-icon icon-play-circle"></i></a>\
 		<a href="javascript:void(0);" class="video-play-loading disable-ripple"><i class="play-icon icon-spinner moveCircleRight"></i></a>\
 	</div>\
 	<div class="current-time-tips"><span>00:00</span></div>\
@@ -22,8 +22,8 @@ var jplayerTemplateMovie =
 			</div>\
 		</div>\
 		<div class="controlset right">\
-			<a href="javascript:void(0);" class="fullscreen smooth"><i class="icon-fullscreen"></i></a>\
-			<a href="javascript:void(0);" class="smallscreen smooth"><i class=" icon-resize-small"></i></a>\
+			<a href="javascript:void(0);" class="fullscreen smooth"><i class="icon-expand"></i></a>\
+			<a href="javascript:void(0);" class="smallscreen smooth"><i class=" icon-compress"></i></a>\
 		</div>\
 		<div class="progress-block">\
 			<div class="timer current"></div>\

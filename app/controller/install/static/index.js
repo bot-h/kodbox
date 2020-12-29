@@ -336,8 +336,11 @@
     }
     Events.bind('windowReady',function(){
         initLng();
-        envCheck(); // 1.环境检测
-        dbSet();    // 2.数据库配置
+        // 检测是否为一键安装，一键安装直接展示账号界面
+        if(!parseInt($('.install-box .fast-install').text())) {
+            envCheck(); // 1.环境检测
+            dbSet();    // 2.数据库配置
+        }
         userSet();  // 3.管理员账号配置
         new kodApi.copyright();
         $(".content-main-message .body").perfectScroll();

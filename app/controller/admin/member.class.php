@@ -73,6 +73,7 @@ class adminMember extends Controller{
 	public function add() {
 		$this->import();
 		$data = Input::getArray(array(
+			"userID"	=> array("default"=>null),
 			"name" 		=> array("check"=>"require"),
 			"sizeMax" 	=> array("check"=>"float","default"=>1024*1024*100),
 			"roleID"	=> array("check"=>"int"),

@@ -555,7 +555,7 @@ div.dialog-simple.music-player-dialog.my-jPlayer .aui-main{min-height: 400px;}
 .jPlayer-music .top-banner .volumeblock .volume-control .volume-value {
 	display:block;
 	width:20%;
-	height:100%;
+	height:100%;height:3px;
 	background: #fff;
 	background:rgba(255, 255, 255, 0.8);
 	border-radius:6px;

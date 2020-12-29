@@ -178,6 +178,9 @@ class adminPlugin extends Controller{
 			show_json(LNG('explorer.dataNotFull'),false);
 		}
 		$app = KodIO::clear($this->in['app']);
+		if(substr($app,0,3) == 'oem'){
+			show_json("专属定制插件不支持卸载,不需要您可以禁用!",false);
+		}		
 		ActionCall($app.'Plugin.onUninstall',$app);
 		$this->model->unInstall($app);
 		del_dir(PLUGIN_DIR.$app);

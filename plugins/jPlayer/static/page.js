@@ -72,6 +72,7 @@ define(function(require, exports) {
 			'flv' : 'flv',
 			'fla' : 'flv',
 			'f4v' : 'flv',
+			'flac':	'flac',
 
 			'f4a' : 'flv',
 			'mp3' : 'mp3',

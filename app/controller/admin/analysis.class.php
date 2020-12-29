@@ -5,8 +5,16 @@ class adminAnalysis extends Controller{
         parent::__construct();
         $this->model = Model('Analysis');
     }
-    public function summary(){
-        $result = $this->model->summary();
+
+    public function option(){
+        $list   = array('user', 'file', 'access', 'server');
+        $type   = Input::get('type','in',null,$list);
+        $result = $this->model->option($type);
+        show_json($result);
+    }
+
+    public function chart(){
+        $result = $this->model->fileChart();
         show_json($result);
     }
 

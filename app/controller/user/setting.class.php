@@ -45,6 +45,7 @@ class userSetting extends Controller {
 			$input = Input::get('input','require');
 			$input = trim(rawurldecode($input));
 		}
+		$input = html2txt($input);
 
 		$userID = $this->user['userID'];
 		if(in_array($data['type'], array('email', 'phone'))){
@@ -304,5 +305,18 @@ class userSetting extends Controller {
 			show_json(LNG('explorer.error'), false);
 		}
 		return LNG('explorer.success');
+	}
+
+	
+	public function taskList(){
+		ActionCall('admin.task.taskList',USER_ID);
+	}
+	public function taskAction(){
+		$result = ActionCall('admin.task.taskActionRun',false);
+		if( !is_array($result['taskInfo']) || 
+			$result['taskInfo']['userID'] != USER_ID){
+			show_json(LNG('common.notExists'),false);
+		}
+		show_json($result['result'],true);
 	}
 }

@@ -17,34 +17,45 @@ class webdavPlugin extends PluginBase{
 	}
 	public function echoJs(){
 		$allow  = $this->isOpen() && $this->authCheck();
-		$assign = array("{{isAllow}}" => intval($allow));
+		$assign = array(
+			"{{isAllow}}" => intval($allow),
+			"{{webdavName}}" => $this->webdavName(),
+		);
 		$this->echoFile('static/main.js',$assign);
 	}
+	private function webdavName(){
+		$config = $this->getConfig();
+		return $config['webdavName'] ? $config['webdavName']:'kodbox';
+	}
+	
 	public function route(){
 		if(strtolower(MOD.'.'.ST) != 'plugin.webdav') return;
 		$action = ACT;//dav/download;
-		$this->$action();exit;
+		if( method_exists($this,$action) ){
+			$this->$action();exit;
+		}
+		$this->run();exit;
 	}
-	public function kodbox(){
+	public function run(){
 		if(!$this->isOpen()) return show_json("not open webdav",false);
 		require($this->pluginPath.'php/kodWebDav.class.php');
-		$dav = new kodWebDav('/index.php/plugin/webdav/kodbox/'); // 适配window多一层;
+		$dav = new kodWebDav('/index.php/plugin/webdav/'.$this->webdavName().'/'); // 适配window多一层;
 		$this->debug($dav);
 		$dav->run();
 	}
 	public function download(){
 		IO::fileOut($this->pluginPath.'static/webdav.cmd',true);
 	}
-	
 	public function check(){
 		echo $_SERVER['HTTP_AUTHORIZATION'];
 	}
 	public function checkSupport(){
-	    CacheLock::unlockRuntime();
+		CacheLock::unlockRuntime();
 		$url = APP_HOST.'index.php/plugin/webdav/check';
 		$auth   = "Basic ".base64_encode('usr:pass');
 		$header = array("Authorization: ".$auth);
 		$res 	= @url_request($url,"GET",false,$header,false,false,3);
+		if($res && substr($res['data'],0,11) == 'API call to') return true; //请求自己失败;
 		if($res && $res['data'] == $auth) return true;
 		
 		@$this->setConfig(array('isOpen'=>'0'));

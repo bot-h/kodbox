@@ -11,9 +11,10 @@ class explorerList extends Controller{
 	public function __construct(){
 		parent::__construct();
 		$this->model = Model("Source");
-	}
+	}	
 	public function path($thePath = false){
 		$path     = $thePath ? $thePath : $this->in['path'];
+		$path     = $path != '/' ? rtrim($path,'/') : '/';//路径保持统一;
 		$path 	  = $this->checkDesktop($path);
 		$pathInfo = KodIO::parse($path);
 		$pathID   = $pathInfo['id'];
@@ -27,6 +28,7 @@ class explorerList extends Controller{
 			case KodIO::KOD_USER_SHARE:			$data = Action('explorer.userShare')->myShare();break;
 			case KodIO::KOD_USER_SHARE_TO_ME:	$data = Action('explorer.userShare')->shareToMe();break;
 			case KodIO::KOD_SHARE_ITEM:			$data = Action('explorer.userShare')->sharePathList($pathInfo);break;
+			case KodIO::KOD_SHARE_LINK:			$data = Action('explorer.share')->pathList();break;
 			case KodIO::KOD_SEARCH:				$data = Action('explorer.listSearch')->listSearch($pathInfo);break;
 			case KodIO::KOD_BLOCK:				$data = $this->blockChildren($pathID);break;
 			case KodIO::KOD_SOURCE:				$data = IO::listPath($path);break;
@@ -37,7 +39,6 @@ class explorerList extends Controller{
 		$this->checkExist($data,$pathInfo);
 		$this->pageParse($data);
 		$this->dataParseHidden($data);
-		$this->pathIconParse($data);
 		$data = Action('explorer.listGroup')->groupChildAppend($data);
 		$data = Action('explorer.fav')->favAppend($data);
 		if($thePath) return $data;
@@ -217,16 +218,52 @@ class explorerList extends Controller{
 			show_json(LNG('common.pathNotExists'),false);
 		}
 	}
-	private function pathIconParse(&$data){
-		if(!$data['current']) return;
-		$current = &$data['current'];
-		$info = KodIO::parse($current['path']);
-		if($info['type'] != KodIO::KOD_IO) return;
-		
-		$storage = Model('Storage')->listData($info['id']);
-		$current['driver'] = strtolower($storage['driver']);
-		$current['pathDisplay'] = str_replace($info['pathBase'],$storage['name'],$current['path']);
-		// pr($info,$storage,$current);exit;
+	public function pathCurrent($path,$loadInfo = true){
+		$info 	 = KodIO::parse($path);
+		$driver  = IO::init($path);
+		$current = false;
+		if($loadInfo){
+			$current = IO::info($path,false);
+		}else if(!$info['type'] && $driver->getType() == 'local'){
+			// 其他网络存储不在此获取信息; 收藏夹列表;
+			$current = IO::info($path,false);
+			if(!$current){ //不存在;
+				$current = array('exists'=>false);
+			}
+		}
+		$current = Model('SourceAuth')->authOwnerApply($current);
+
+		if(!$current){
+			$current = $this->ioInfo($info['type']);
+			if($info['type'] == KodIO::KOD_BLOCK){
+				$list = $this->blockItems();
+				$current = array(
+					'name' 	=> $list[$info['id']]['name'],
+					'icon'	=> 'block-item',
+				);
+				$current['name'] = $current['name'] ? $current['name']:'root';
+			}else if($info['type'] == KodIO::KOD_USER_FILE_TYPE){
+				$list = $this->blockFileType();
+				$current = $list[$info['id']];
+				$current['name'] = LNG('common.fileType').' - '.$current['name'];
+			}else if($info['type'] == KodIO::KOD_USER_FILE_TAG){
+				$list = Action('explorer.tag')->tagList();
+				$current = $list[$info['id']];
+				$current['name'] = LNG('common.tag').' - '.$current['name'];
+			}else if($info['type'] == KodIO::KOD_SEARCH){
+			}
+		}
+
+		if($info['type'] == KodIO::KOD_IO ){
+			$storage = Model('Storage')->listData($info['id']);
+			$current['icon'] = 'io-'.strtolower($storage['driver']);
+			$current['pathDisplay'] = str_replace($info['pathBase'],$storage['name'],$current['path']);
+			if( !strstr(trim($current['pathDisplay'],'/'),'/') ){
+				$current['name'] = $storage['name'];
+			}
+		}
+		$current['path'] = $path;
+		return $current;
 	}
 
 	/**
@@ -243,12 +280,10 @@ class explorerList extends Controller{
 				'fileList'		=> array()
 			);
 		}
-		
+
+		$data['current']  = $this->pathCurrent($path);
 		$data['thisPath'] = $path;
-		$data['targetSpace'] = $this->targetSpace($data['current']);
-		$data['current']  = IO::info($path,false);
-		$data['current'] = Model('SourceAuth')->authOwnerApply($data['current']);
-						
+		$data['targetSpace'] = $this->targetSpace($data['current']);		
 		foreach ($data['folderList'] as &$item) {
 			if( isset($item['children']) ){
 				$item['isParent'] = true;
@@ -273,7 +308,7 @@ class explorerList extends Controller{
 			$result = array();
 			foreach ($list as $item){
 				if(substr($item['name'],0,1) == '.') continue;
-				if(in_array($item['name'],$pathHidden)) continue;			
+				if(in_array($item['name'],$pathHidden)) continue;
 				$result[] = $item;
 			}
 			$data[$type] = $result;
@@ -348,24 +383,17 @@ class explorerList extends Controller{
 	 * 根数据块
 	 */
 	private function blockRoot(){
-		$list = array(
-			'files'		=>	array('name'=>LNG('common.position'),'open'=>true),
-			'tools'		=>	array('name'=>LNG('common.tools'),'open'=>true,'children'=>true),
-			'fileType'	=>	array('name'=>LNG('common.fileType'),'open'=>false,'children'=>true),
-			// 'fileTag'	=>	array('name'=>LNG('common.tag'),'open'=>false,'children'=>true),
-			'driver'	=>	array('name'=>LNG('common.mount').' (admin)','open'=>false),
-		);
+		$list = $this->blockItems();
 		if(!$this->pathEnable('fileType')){unset($list['fileType']);}
-		if(!$this->pathEnable('driver')){unset($list['driver']);}
-		// if(!$this->pathEnable('fileTag')){unset($list['fileTag']);}
-		
-		
-		$result = array();		
+		if(!$GLOBALS['isRoot'] || !$this->pathEnable('driver')){unset($list['driver']);}
+		if(!$this->pathEnable('fileTag')){unset($list['fileTag']);}
+		$result = array();
 		foreach ($list as $type => $item) {
 			$block = array(
 				"name"		=> $item['name'],
 				"path"		=> '{block:'.$type.'}/',
 				"open"		=> $item['open'],
+				"icon"		=> 'block-item',
 				"isParent"	=> true,
 				"children"	=> $this->blockChildren($type),
 			);
@@ -373,6 +401,16 @@ class explorerList extends Controller{
 			$result[] = $block;
 		}
 		return $result;
+	}
+	private function blockItems(){
+		$list = array(
+			'files'		=>	array('name'=>LNG('common.position'),'open'=>true),
+			'tools'		=>	array('name'=>LNG('common.tools'),'open'=>true,'children'=>true),
+			'fileType'	=>	array('name'=>LNG('common.fileType'),'open'=>false,'children'=>true),
+			'fileTag'	=>	array('name'=>LNG('common.tag'),'open'=>false,'children'=>true),
+			'driver'	=>	array('name'=>LNG('common.mount').' (admin)','open'=>false),
+		);
+		return $list;		
 	}
 	
 	/**
@@ -388,7 +426,7 @@ class explorerList extends Controller{
 			case 'fileTag': 	$result = Action('explorer.tag')->tagList();break;
 			case 'driver': 		$result = Action("explorer.listDriver")->get();break;
 		}
-		return $result;
+		return array_values($result);
 	}
 	
 	/**
@@ -399,33 +437,25 @@ class explorerList extends Controller{
 		$groupRoot = '1';
 		$groupInfo = Model('Group')->getInfo($groupRoot);
 		$list = array(
-			"fav"=>array(
-				'name'      => LNG('explorer.toolbar.fav'),
-				'path' 		=> KodIO::KOD_USER_FAV,
-				'open'		=> false,
-			),
+			"fav"=> $this->ioInfo(KodIO::KOD_USER_FAV),
 			"my"=>array(
-				'name'		=> LNG('explorer.toolbar.rootPath'),//我的网盘
-				'path' 		=> KodIO::make(Session::get('kodUser.sourceInfo.sourceID')),
-				'open'		=> true,
-				"sourceRoot"=> 'userSelf',//文档根目录标记；前端icon识别时用：用户，部门
-				'targetType'=> 'user',
-				'targetID' => USER_ID,
+				'name'			=> LNG('explorer.toolbar.rootPath'),//我的网盘
+				'path' 			=> KodIO::make(Session::get('kodUser.sourceInfo.sourceID')),
+				'open'			=> true,
+				"sourceRoot"	=> 'userSelf',//文档根目录标记；前端icon识别时用：用户，部门
+				'targetType'	=> 'user',
+				'targetID' 		=> USER_ID,
 			),
 			"rootGroup"=>array(
-				'name'		=> $groupInfo['name'],//公共网盘
-				'path' 		=> KodIO::make($groupInfo['sourceInfo']['sourceID']),
-				'open'		=> false,
-				"sourceRoot"=> 'groupPublic',
-				'targetType'=> 'group',
-				'targetID' => $groupRoot,
+				'name'			=> $groupInfo['name'],//公共网盘
+				'path' 			=> KodIO::make($groupInfo['sourceInfo']['sourceID']),
+				"sourceRoot"	=> 'groupPublic',
+				'targetType'	=> 'group',
+				'targetID' 		=> $groupRoot,
 			),
-			"myGroup"=>array(
-				'name'		=> LNG('explorer.toolbar.myGroup'),
-				'path' 		=> KodIO::KOD_GROUP_ROOT_SELF,
-				'open'		=> false,
-			)
+			"myGroup"=> $this->ioInfo(KodIO::KOD_GROUP_ROOT_SELF),
 		);
+		
 		$groupInfo 	= Session::get("kodUser.groupInfo");
 		$groupInfo 	= array_to_keyvalue($groupInfo,'groupID');//自己所在的组
 		if( !$groupInfo[$groupRoot] ){
@@ -452,14 +482,25 @@ class explorerList extends Controller{
 	}
 	
 	private function pathEnable($type){
-		$option = Model('SystemOption')->get();
+		$model  = Model('SystemOption');
+		$option = $model->get();
 		if( !isset($option['treeOpen']) ) return true;
-		//单独添加driver情况;更新后处理;
-		if( !$option['treeOpenDriver']){
-			Model('SystemOption')->set('treeOpenDriver','1');
-			Model('SystemOption')->remove('treeOpen');
-			return true;
+		
+		//单独添加driver情况;更新后处理;  单独加入文件类型开关,则根据flag标记;自动处理;
+		$checkFlag = false;
+		$checkType = array(
+			'treeOpenDriver' 	=> 'driver',
+			'treeOpenFileFlag' 	=> 'fileTag',
+		);
+		foreach ($checkType as $keyType=>$key){
+			if( $option[$keyType] !='ok'){
+				$model->set($keyType,'ok');
+				$model->set('treeOpen',$option['treeOpen'].','.$key);
+				$result = true;
+			}
 		}
+		if($result) return true;
+		
 		$allow = explode(',',$option['treeOpen']);
 		return in_array($type,$allow);
 	}
@@ -471,11 +512,12 @@ class explorerList extends Controller{
 		$docType = KodIO::fileTypeList();
 		$list	 = array();
 		foreach ($docType as $key => $value) {
-			$list[] = array(
-				"name"	=> $value['name'],
-				"path"	=> KodIO::makeFileTypePath($key),
-				'ext'	=> $value['ext'],
-				'extType' => $key,
+			$list[$key] = array(
+				"name"		=> $value['name'],
+				"path"		=> KodIO::makeFileTypePath($key),
+				'ext'		=> $value['ext'],
+				'extType'	=> $key,
+				'icon' 		=> 'userFileType-'.$key,
 			);
 		}
 		return $list;
@@ -485,13 +527,46 @@ class explorerList extends Controller{
 	 * 工具
 	 */
 	private function blockTools(){
-		$list = array(
-			'recentDoc' => array("name" => LNG('explorer.toolbar.recentDoc'), "path"=> KodIO::KOD_USER_RECENT.'/'),
-			'myShare' 	=> array("name" => LNG('explorer.toolbar.myShare'), "path"=> KodIO::KOD_USER_SHARE.'/'),
-			'shareToMe' => array("name" => LNG('explorer.toolbar.shareToMe'), "path" => KodIO::KOD_USER_SHARE_TO_ME.'/'),
-			'recycle' 	=> array("name"=> LNG('explorer.toolbar.recycle'), "path"=> KodIO::KOD_USER_RECYCLE.'/'),
-		);
-		if(!$this->pathEnable('recentDoc')){unset($list['recentDoc']);}
+		$list = $this->ioInfo(array(
+			KodIO::KOD_USER_RECENT,
+			KodIO::KOD_USER_SHARE,
+			KodIO::KOD_USER_SHARE_TO_ME,
+			KodIO::KOD_USER_RECYCLE,
+		));
+		if(!$this->pathEnable('recentDoc')){
+			unset($list[KodIO::KOD_USER_RECENT]);
+		}
 		return array_values($list);
 	}
+
+	private function ioInfo($pick){
+		$list = array(
+			KodIO::KOD_USER_FAV			=> LNG('explorer.toolbar.fav'),
+			KodIO::KOD_GROUP_ROOT_SELF	=> LNG('explorer.toolbar.myGroup'),
+			KodIO::KOD_USER_RECENT		=> LNG('explorer.toolbar.recentDoc'),
+			KodIO::KOD_USER_SHARE		=> LNG('explorer.toolbar.myShare'),
+			KodIO::KOD_USER_SHARE_TO_ME	=> LNG('explorer.toolbar.shareToMe'),
+			KodIO::KOD_USER_RECYCLE		=> LNG('explorer.toolbar.recycle'),
+			KodIO::KOD_SEARCH			=> LNG('common.search'),
+		);
+		$result = array();
+		foreach ($list as $key => $name){
+			$result[$key] = array(
+				"name"	=> $name, 
+				"path"	=> $key.'/',
+				"icon"	=> trim(trim($key,'{'),'}')
+			);
+		}
+		if(is_string($pick)){
+			return $result[$pick];
+		}else if(is_array($pick)){
+			$pickArr = array();
+			foreach ($pick as $value) {
+				$pickArr[$value] = $result[$value];
+			}
+			return $pickArr;
+		}		
+		return $result;	
+	}
+	
 }

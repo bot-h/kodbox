@@ -26,12 +26,12 @@ class explorerAuth extends Controller {
 			'download'	=> array('explorer.index'=>'fileDownload',),// 下载/复制;下载/复制/文件预览打印
 			'upload'	=> array('explorer.upload'=>'fileUpload,serverDownload'),
 			'edit'		=> array(
-				'explorer.index'	=>'mkdir,mkfile,setDesc,fileSave,pathRename,pathPast,pathCopyTo,pathCuteTo',
+				'explorer.index'	=>'mkdir,mkfile,setDesc,fileSave,pathRename,pathPast,pathCopyTo,pathCuteTo,setMeta',
 				'explorer.editor' 	=>'fileSave'
 			),
 			// 'remove'	=> array('explorer.index'=>'pathDelete'),	//批量中处理
 			'share'		=> array('explorer.userShare'=>'add'),
-			'comment'	=> array('explorer.index'=>''),
+			'comment'	=> array('comment.index'=>''),
 			'event'		=> array('explorer.index'=>'pathLog'),
 			'root'		=> array('explorer.index'=>'setAuth'),
 		);
@@ -109,7 +109,7 @@ class explorerAuth extends Controller {
 
 	public function checkSpaceOnCreate($sourceInfo){
 		if($sourceInfo['targetType'] == SourceModel::TYPE_GROUP){
-			$space = Model('User')->getInfo($sourceInfo['targetID']);
+			$space = Model('Group')->getInfo($sourceInfo['targetID']);
 		}else if($sourceInfo['targetType'] == SourceModel::TYPE_USER){
 			$space = Model('User')->getInfo($sourceInfo['targetID']);
 		}else{
@@ -195,7 +195,10 @@ class explorerAuth extends Controller {
 		if($GLOBALS['isRoot'] && $this->config["ADMIN_ALLOW_SOURCE"]) return true;
 		$pathInfo 	= IO::infoAuth($parse['pathBase']);
 		$targetType = $pathInfo['targetType'];
-		if(!$pathInfo) return true; //不存在,不判断文档权限;
+		// if(!$pathInfo) return true; 
+		if(!$pathInfo){//不存在,不判断文档权限;
+			return $this->errorMsg(LNG('common.pathNotExists'),0);
+		}
 		if( $targetType != 'user' && $targetType != 'group' ){
 			return $this->errorMsg(LNG('explorer.noPermissionAction'),1003);
 		}
@@ -212,7 +215,7 @@ class explorerAuth extends Controller {
 		}
 		// 删除操作：拦截根文件夹；用户根文件夹，部门根文件夹
 		if( $pathInfo['parentID'] == '0' && $action=='remove' ){
-			return $this->errorMsg(LNG('explorer.noPermissionAction'),1100);	
+			return $this->errorMsg(LNG('explorer.noPermissionAction'),1100);
 		}
 		return true;
 	}

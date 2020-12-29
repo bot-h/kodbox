@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html>
 <head>
+<?php $this->link('style/dist/main.css','static');?>
+<?php $this->link('style/lib/alifont/iconfont.css','staticApp');?>
+<?php $this->link('style/lib/icomoon/style.css','staticApp');?>
 
 <style type="text/css">
 	html body{
@@ -11,7 +14,8 @@
 	}
 	.powerby{text-align: center;font-size:12px;color:#ccc;}
 	div.word-body, .ppt-body{background:#f9f9f9;}
-	div.word-page{border-bottom:1px solid #d9d9d9;box-shadow:0 1px 6px #ccc; max-width: 845px;}
+	/* div.word-page{border-bottom:1px solid #d9d9d9;box-shadow:0 1px 6px #ccc; max-width: 845px;} */
+	div.word-page{border-bottom:1px solid #d9d9d9;box-shadow:0 1px 6px #ccc; }
 	div.word-page .word-content{max-width: 85%;}}
 	div.navbar{display:none;}
 	body.fullScreen div.word-page{max-width: 100%;border: none;}
@@ -111,6 +115,40 @@
 		div.word-page,div.word-page .word-content{border-bottom:none;box-shadow:none;}
 		/*.container-fluid{padding:20px 10px;}*/
 	}
+
+	div.navbar-inverse{background: none !important;border:none !important;}
+	div.navbar-inverse .brand {width: 40% !important;}
+	div.changePage .activePage {height: 24px;line-height: 24px;}
+	div.container-fluid.container-fluid-content{background:#eeeef4;}
+	div.word-page {
+		border: none;
+		box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+		background: #fff;
+		border-radius: 2px;
+	}
+	.changePage .pageUp:after {content:"\ea28";font-family: 'icomoon';}
+	.changePage .pageDown:after {content:"\ea29";font-family: 'icomoon';}
+	
+	div #rotateLeft,div #rotateRight,
+	div .pageUp,div .pageDown{
+		width: 30px;height: 30px;line-height:30px;
+		text-align: center;
+		margin-top: 6px;
+		padding: 0 !important;
+		border-radius: 4px;
+		text-decoration: none;
+    	color: #bbb;
+	}
+	div #rotateLeft:hover,div #rotateRight:hover,
+	div .pageUp:hover,div .pageDown:hover{
+		background:rgba(0,0,0,0.1) !important;
+	}
+	div .pageUp,div .pageDown{margin-top:-3px;}
+	
+	#rotateLeft img,#rotateRight img{display:none;}
+	#rotateLeft:before{content:"\f0e2";font-family: 'icomoon';}
+	#rotateRight:before{content:"\f01e";font-family: 'icomoon';}
+	
 	<?php 
 		$doc = array('doc','docx','docm','dot','dotx','dotm','rtf',  'wps','wpt');
 		if(in_array(get_path_ext($app->filePath),$doc)){

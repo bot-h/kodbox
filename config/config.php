@@ -100,6 +100,7 @@ include(BASIC_PATH.'config/setting.php');
 init_common();
 $config['autorun'] = array(
 	'user.index.init',
+	'user.index.maintenance',
 	'user.authRole.autoCheck',
 	'user.authPlugin.autoCheck',
 	'explorer.auth.autoCheck',

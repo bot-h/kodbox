@@ -105,8 +105,10 @@ class adminSetting extends Controller {
 
 	public function clearCache() {
 		Cache::deleteAll();
+		http_close();
 		del_dir(TEMP_PATH);
 		mk_dir(TEMP_PATH . 'log');
+		AutoTask::restart();//停止计划任务; (再次访问自动开启)
 	}
 
 	/**

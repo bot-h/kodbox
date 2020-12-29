@@ -111,7 +111,11 @@ define(function(require, exports) {
 			},300);
 		});
 		gallery.init();
+		
+		// 解决滚动穿透问题;(UC,内嵌网页等情况)
+		$(".pswp__bg").scrollTop($(".pswp__bg").scrollInnerHeight() / 2);
 	};
+	
 	
 	var bindCloseTag = false;
 	var bindClose = function(){
@@ -122,6 +126,10 @@ define(function(require, exports) {
 			if(needClose){
 				$(".pswp__button--close").trigger("click");
 			}
+
+			setTimeout(function(){
+				$(".pswp__bg").scrollTop($(".pswp__bg").scrollInnerHeight() / 2);
+			},10);
 		});
 	}
 

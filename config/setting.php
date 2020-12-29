@@ -12,17 +12,19 @@
 // header('Access-Control-Allow-Headers: Content-Type,Content-Length,Accept-Encoding,X-Requested-with, Origin');
 
 //配置数据,可在setting_user.php中添加变量覆盖,升级后不会被替换
-$config['settings'] = array(
+$config['settings'] = array( 
 	'downloadUrlTime'	=> 0,			 	//下载地址生效时间，按秒计算，0代表不限制
 	'apiLoginTonken'	=> '',			 	//设定则认为开启服务端api通信登录，同时作为加密密匙
 	'paramRewrite'		=> false,		 	//开启url 去除? 直接跟参数
-	'ioDisabled'		=> 'moss,eos',		//不显示的io类型，多个以','分隔
+	'ioAvailed'			=> 'local,ftp,oss,qiniu,cos,s3,oos',		//显示的io类型，多个以','分隔
+	'ioFileOutServer'	=> false,
+	'ioUploadServer'	=> false,
 	
 	'upload' => array(
 		'chunkSize'			=> 0.5,			// MB 分片上传大小设定;需要小于php.ini上传限制的大小
 		'threads'			=> 10,			// 上传并发数;部分低配服务器上传失败则将此设置为1
 		'ignoreName'		=> '',			// 忽略的文件名,不区分大小写; 逗号隔开,例如: .DS_Store,Thumb.db
-		'chunkRetry'		=> 5,			// 分片上传失败,重传次数;针对每个分片;
+		'chunkRetry'		=> 2,			// 分片上传失败,重传次数;针对每个分片;
 		'sendAsBinary'		=> 0,			// 以二进制方式上传;后端服务器以php://input接收;0则为传统方式上传 $_FILE;
 		'httpSendFile'		=> false,		//调用webserver下载 http://www.laruence.com/2012/05/02/2613.html; 
 											//https://www.lovelucy.info/x-sendfile-in-nginx.html	
@@ -30,7 +32,6 @@ $config['settings'] = array(
 		'ignoreExt'			=> '',          // 限制的扩展名; 扩展名在该说明中则自动不上传;
 		'ignoreFileSize'	=> 0			// 允许单个文件上传最大值,0则不限制; 单位GB;
 	),
-	
 	'staticPath'		=> APP_HOST."static/",	//静态文件目录,可以配置到cdn;
 	'kodApiServer'		=> "https://api.kodcloud.com/?", //QQ微信登陆/邮件发送/插件-列表等 
 );
@@ -158,7 +159,8 @@ $config['settingSystemDefault'] = array(
 	'loginIpCheck'		=> '0',			// 登陆ip限制开关;
 	'loginIpAllow'		=> '',			// 登陆允许的ip来源; ip白名单;
 	'csrfProtect'		=> '0',		 	// 开启csrf保护	
-
+	
+	'treeOpen'			=> 'my,myGroup,recentDoc,fileType,fileTag,driver',//树目录开启功能;
 	'wallpageDesktop'	=> "1,2,3,4,5,6,7,8,9,10,11,12,13",
 	'wallpageLogin'		=> "2,3,6,8,9,11,12",
 	'emailType'			=> "0",			// 邮件方式
@@ -202,6 +204,7 @@ $config['settingDefault'] = array(
 	'imageThumb'		=> '1',
 	'fileSelect'		=> '1',
 	'displayHideFile'	=> '0',
+	'filePanel'			=> '0',
 );
 $config['editorDefault'] = array(
 	'fontSize'		=> '14px',
@@ -217,7 +220,57 @@ $config['editorDefault'] = array(
 	"autoSave"		=> '0',		//自动保存
 );
 
-// 文档类型筛选；分页
+// 多语言; 在user/view/parseMetaLang中替换; meta.[key] 为多语言key;
+$config['settings']['sourceMeta'] = array(
+	'configItem'	=> array(
+		'defaultShow'	=> 'user_sourceAlias', 					 					 //默认显示的key;
+		'fileAllow'		=> 'user_sourceAlias,user_fileEncodeType,user_sourceNumber,user_sourceParticipant', //文件支持的key
+		'folderAllow'	=> 'user_sourceAlias,user_fileEncodeType,user_sourceParticipant',					 //文件夹支持的key
+	),
+	'user_sourceAlias' => array(
+		"type"		=> "fileSelect",
+		"value"		=> "",
+		"display" 	=> "关联文件(附件)",
+		"info"		=> array(
+			"single"	=> false,			// 单选or多选; true/false
+			"type"		=> "all", 			// 文件or文件夹选择; file|folder|all
+			"makeUrl"	=> false,			// 生成永久外链,
+			"valueKey"	=> "path", 			// 取结果中的key
+			"valueShowKey"	=> 'name',		// 显示名称;
+			"title"		=> "关联文件(附件)", // 对话框标题;		
+			"authCheck"	=> "read",			// read,write或空;默认为可写入;
+		),
+	),
+	'user_fileEncodeType' => array(
+		"type"		=> "select",
+		"value"		=> "",
+		"display" 	=> "文件密级",
+		"info"		=> array(
+			""  => '---',
+			"A"	=> "A-绝密",
+			"B"	=> "B-机密",
+			"C"	=> "C-秘密",
+		),
+	),
+	//扩展;
+	'user_sourceNumber' => array(
+		"type"		=> "input",
+		"value"		=> "",
+		"display" 	=> "宗卷编号",
+	),
+	//扩展;
+	'user_sourceParticipant' => array(
+		"type"		=> "user",
+		"value"		=> "",
+		"display" 	=> "参与者",
+		"selectType"=> "mutil",
+	),
+);
+
+/**
+ * 文档类型筛选
+ * name多语言: explorer.type.[type] 存在则使用该key;否则使用默认name;
+ */
 $config['documentType'] = array(
 	"doc" => array(
 		"name"		=> '文档',	//file-type: file-type-doc
@@ -329,29 +382,32 @@ $config['authRoleAction']= array(
 	'explorer.add'			=> array('explorer.index'=>'mkdir,mkfile'),
 	'explorer.upload'		=> array('explorer.upload'=>'fileUpload'),
 	'explorer.view'			=> array(
-		'explorer.index'=>'fileOut,unzipList,fileOutBy',
+		'explorer.index'=>'fileOut,unzipList,fileOutBy,pathLog',
 		'explorer.editor'=>'fileGet',
-		'explorer.fileView'=>'index,open'
+		'explorer.fileView'=>'index,open',
 	),
 	'explorer.download'		=> array('explorer.index'=>'fileDownload,zipDownload,fileDownloadRemove'),
 	'explorer.share'		=> array('explorer.userShare'=>'add,edit,del'),
 	'explorer.remove'		=> array('explorer.index'=>'pathDelete,recycleDelete,recycleRestore'),
-	'explorer.edit'			=> array('explorer.index'=>'setDesc,setAuth,fileSave,pathRename,zip,unzip',
-									 'explorer.editor'=>'fileSave',
-									 'explorer.history'=>'get,remove,clear,rollback,setDetail,fileOut'),
+	'explorer.edit'			=> array(
+		'explorer.index'	=>'setDesc,setMeta,setAuth,fileSave,pathRename,zip,unzip',
+		'explorer.editor'	=>'fileSave',
+		'explorer.history'	=>'get,remove,clear,rollback,setDetail,fileOut',
+		'comment.index'		=>'listData,add,remove,prasise,listByUser,listChildren'
+	),
 	'explorer.move'			=> array('explorer.index'=>'pathCopy,pathCute,pathCopyTo,pathCuteTo,pathPast,clipboard'),
 	'explorer.serverDownload'=> array('explorer.upload'=>'serverDownload'),
 	'explorer.search'		=> array(''),
 	'explorer.unzip'		=> array('explorer.index'=>'unzip,unzipList'),
 	'explorer.zip'			=> array('explorer.index'=>'zip,zipDownload'),
-	
+
 	'user.edit'				=> array(
 		'user.setting'	=> 'setConfig,setUserInfo,setHeadImage,uploadHeadImage',
 		'user.bind'		=> 'bindApi',
 	),
 	'user.fav' => array(
 		'explorer.fav'=>'add,rename,moveTop,moveBottom,del',
-		'explorer.tag'=>'add,edit,remove,moveTop,moveBottom,resetSort,sourceAddToTag,sourceResetTag,sourceRemoveFromTag',
+		'explorer.tag'=>'add,edit,remove,moveTop,moveBottom,resetSort,filesAddToTag,filesResetTag,filesRemoveFromTag',
 	),
 	
 	'admin.index.dashboard'	=> array('admin.analysis'=>'summary,table,trend'),

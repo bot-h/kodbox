@@ -141,10 +141,12 @@ class kodWebDav extends HttpDavServer {
 	}	
 	
 	public function pathPut($path,$localFile=''){
-		$urlPath 	= $this->pathGet();
-		$father 	= $this->parsePath(IO::pathFather($urlPath));
-		$uploadPath = rtrim($father,'/').'/'.IO::pathThis($urlPath); //构建上层目录追加文件名;
-		$this->plugin->log("upload to=$path=>$uploadPath;local=$localFile");
+		$name 		= IO::pathThis($this->pathGet());
+		$driver 	= IO::init($path);
+		$father 	= $driver->getPathOuter(IO::pathFather($path));
+		// $father 	= $this->parsePath(IO::pathFather($this->pathGet()));
+		$uploadPath = rtrim($father,'/').'/'.$name; //构建上层目录追加文件名;
+		$this->plugin->log("upload to=$uploadPath=>$father;local=$localFile");
 
 		if(!$this->can($path,'edit')) return false;
 		if(!$this->pathExists($path)){ //新建;

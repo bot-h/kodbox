@@ -65,8 +65,7 @@ class explorerListSearch extends Controller{
 		$parse = KodIO::parse($path);
 		if($parse['type'] == KodIO::KOD_SHARE_ITEM){
 			$share = Action("explorer.userShare");
-			$sourceID = trim($parse['param'],'/');
-			$sourceInfo = $share->sharePathInfo($parse['id'],$sourceID);
+			$sourceInfo = $share->sharePathInfo($parse['id']);
 			if(!$sourceInfo){
 				show_json(LNG('explorer.noPermissionAction'),false);
 			}

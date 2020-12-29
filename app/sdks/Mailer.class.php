@@ -29,7 +29,9 @@ class Mailer {
 		try {
 			// $config = $this->plugin->typeConfig($this->type);
 
-			$mail->setLanguage('zh_cn', './language/');
+			if(i18n::getType() == 'zh-CN') {
+				$mail->setLanguage('zh_cn', __DIR__ . '/Mailer/language/');
+			}
 		    //Server settings
 		    // $mail->SMTPDebug = SMTP::DEBUG_SERVER;				// Enable verbose debug output
 		    $mail->isSMTP();										// Send using SMTP
