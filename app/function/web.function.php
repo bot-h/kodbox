@@ -931,7 +931,8 @@ function get_broswer(){
             }
             $name = count($value) == 1 ? $key : $value[1];
             preg_match($value[0], $agent, $match);
-            $broswer = $name . '(' . $match[1] . ')';
+			$broswer = $name . '(' . $match[1] . ')';
+			return $broswer;
         }
     }
     if ($broswer == '') {$broswer = "Unknown";}

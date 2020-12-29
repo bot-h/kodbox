@@ -81,7 +81,7 @@ class commentTopic extends Controller {
 	}
 	public function read(){
 		$item = Input::getArray(array(
-			"targetType"	=> array("check"=>"in","param"=>CommentModel::TYPEALL),
+			"targetType"	=> array("check"=>"in","param"=>CommentModel::$TYPEALL),
 			"targetID"		=> array("check"=>"number"),
 		));
 		$this->readItem($item['targetType'],$item['targetID']);

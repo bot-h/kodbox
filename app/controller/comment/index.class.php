@@ -22,7 +22,7 @@ class commentIndex extends Controller {
 	 */
 	public function listData(){
 		$data = Input::getArray(array(
-			"targetType"	=> array("check"=>"in","param"=>CommentModel::TYPEALL),
+			"targetType"	=> array("check"=>"in","param"=>CommentModel::$TYPEALL),
 			"targetID"		=> array("check"=>"number"),
 			
 			"idFrom"		=> array("check"=>"number","default"=>0),
@@ -43,7 +43,7 @@ class commentIndex extends Controller {
 	*/
 	public function add(){
 		$data = Input::getArray(array(
-			"targetType"	=> array("check"=>"in","param"=>CommentModel::TYPEALL),
+			"targetType"	=> array("check"=>"in","param"=>CommentModel::$TYPEALL),
 			"targetID"      => array("check"=>"require"),
 			"content"       => array("check"=>"require"),
 			

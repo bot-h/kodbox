@@ -22,6 +22,26 @@ class userBind extends Controller {
 			'weixin' => LNG('common.wechat')
 		);
 		$this->addUser = $this->withApp = false;
+		$this->checkAuth();
+	}
+	
+	private function checkAuth(){
+		if(!Session::get('kodUser')) return;
+		$check = array(
+			'user.bind.bind',
+			'user.bind.bindApi',
+			'user.bind.unbind',
+			'user.bind.oauth',
+			'user.bind.bindWithApp',
+		);
+		$action = strtolower(ACTION);
+		foreach ($check as &$theAction){
+			$theAction = strtolower($theAction);
+		}
+		if(!in_array($action,$check)) return;
+		if(!Action('user.authRole')->authCan('user.edit')){
+			show_json(LNG('explorer.noPermissionAction'),false);
+		}
 	}
 
 	/**
@@ -227,7 +247,7 @@ class userBind extends Controller {
 		Model('User')->metaSet($data['userID'],'passwordSalt','');
 		Model('User')->where(array('userID' => $data['userID']))->save(array('password' => ''));
 		// 4.写入用户meta信息
-		if (!$this->bindSave($data)) return array('code' => false, 'data' => LNG('user.bindUpdateError'));
+		if (!$this->bindSave($data, $data['userID'])) return array('code' => false, 'data' => LNG('user.bindUpdateError'));
 		$this->addUser = true;
 		return array('code' => true, 'data' => $data['userID']);
 	}
@@ -240,7 +260,8 @@ class userBind extends Controller {
 	private function bindBack($type, $data) {
 		$data['bind'] = true;
 		// 绑定信息存储
-		if (!$ret = $this->bindSave($data, true)) {
+		$userID = Session::get("kodUser.userID");
+		if (!$ret = $this->bindSave($data, $userID, true)) {
 			return $this->bindHtml($type, $data, false, array('bind', 'update_error'));
 		}
 		return $this->bindHtml($type, $data, true, array('bind'));
@@ -309,8 +330,8 @@ class userBind extends Controller {
 	 */
 	public function sendMsg() {
 		$data = Input::getArray(array(
-				'type'	 => array('check' => 'require'),
-				'input'	 => array('check' => 'require'),
+			'type'	 => array('check' => 'require'),
+			'input'	 => array('check' => 'require'),
 		));
 		$type = $data['type'];
 
@@ -653,9 +674,11 @@ class userBind extends Controller {
 	/**
 	 * 第三方信息绑定保存
 	 */
-	private function bindSave($data, $back=false) {
+	private function bindSave($data, $userID, $back=false) {
 		// 更新头像、meta信息
-		$userID = isset($data['userID']) ? $data['userID'] : Session::get("kodUser.userID");
+		if(!$userID){
+			show_json('not login!',false);
+		}
 		if($back) Model("User")->userEdit($userID, array("avatar" => $data['avatar']));
 
 		$metadata = array(

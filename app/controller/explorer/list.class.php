@@ -137,8 +137,8 @@ class explorerList extends Controller{
 
 	private function pageParse(&$data){
 		if(isset($data['pageInfo'])) return;
-		$in = $this->in; $pageNum = 200; $page=1;
-		$pageNumMax = 2000;
+		$in = $this->in; $pageNum = 3000; $page=1; //webdav列表处理;
+		$pageNumMax = 5000;
 		$fileCount  = count($data['fileList']);
 		$folderCount= count($data['folderList']);
 		$totalNum	= $fileCount + $folderCount;

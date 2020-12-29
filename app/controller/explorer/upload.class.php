@@ -174,6 +174,7 @@ class explorerUpload extends Controller{
 		$filename = _get($this->in,'name',$header['name']);
 		$filename = unzip_filter_ext($filename);
 		$saveFile = TEMP_FILES.md5($uuid);
+		mk_dir(TEMP_FILES);
 		Session::set($uuid,array(
 			'supportRange'	=> $header['supportRange'],
 			'length'		=> $header['length'],
@@ -182,7 +183,7 @@ class explorerUpload extends Controller{
 		));
 		$result = Downloader::start($url,$saveFile);
 		if($result['code']){
-			$outPath = IO::move($saveFile,$path);
+			$outPath = IO::move($saveFile,$path,REPEAT_REPLACE);
 			$outPath = IO::rename($outPath,$filename);
 			$pathInfo = IO::info($outPath);
 			show_json(LNG('explorer.downloaded'),true,$pathInfo);

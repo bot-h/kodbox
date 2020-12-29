@@ -63,7 +63,7 @@ class userIndex extends Controller {
 			$upload['chunkSize']  = floatval($sysOption['chunkSize']);
 			$upload['ignoreName'] = trim($sysOption['ignoreName']);
 			$upload['chunkRetry'] = intval($sysOption['chunkRetry']);
-			$upload['httpSendFile']  = $sysOption['httpSendFile'] == '1';
+			// $upload['httpSendFile']  = $sysOption['httpSendFile'] == '1'; //前端默认屏蔽;
 			
 			// 上传限制扩展名,限制单文件大小;
 			$role = Action('user.authRole')->userRoleAuth();
@@ -82,6 +82,7 @@ class userIndex extends Controller {
 		}
 		$upload['chunkSize'] = $upload['chunkSize']*1024*1024;
 		$upload['chunkSize'] = $upload['chunkSize'] <= 1024*1024*0.1 ? 1024*1024*0.4:$upload['chunkSize'];
+		$upload['chunkSize'] = intval($upload['chunkSize']);
 	}
 
 	/**
@@ -108,15 +109,18 @@ class userIndex extends Controller {
 			// 用户账号hash对比; 账号密码修改自动退出处理;
 			if($findUser['userHash'] != $this->user['userHash']){
 				Session::destory();
-				show_json('user data error!',ERROR_CODE_LOGOUT);
+				show_json('user hash error!',ERROR_CODE_LOGOUT);
 			}
 			Session::set('kodUser',$findUser);
 		}
 		if (!$this->user) {
+			Session::destory();
 			show_json('user data error!',ERROR_CODE_LOGOUT);
 		} else if ($this->user['status'] == 0) {
+			Session::destory();
 			show_json(LNG('user.userEnabled'),ERROR_CODE_USER_INVALID);
 		} else if ($this->user['roleID'] == '') {
+			Session::destory();
 			show_json(LNG('user.roleError'),ERROR_CODE_LOGOUT);
 		}
 		

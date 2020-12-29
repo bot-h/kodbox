@@ -403,7 +403,7 @@ $config['authRoleAction']= array(
 
 	'user.edit'				=> array(
 		'user.setting'	=> 'setConfig,setUserInfo,setHeadImage,uploadHeadImage',
-		'user.bind'		=> 'bindApi',
+		// 'user.bind'		=> 'bindApi,bindMetaInfo,oauth,bindWithApp', //被全开放了, 构造函数中自行权限检测;
 	),
 	'user.fav' => array(
 		'explorer.fav'=>'add,rename,moveTop,moveBottom,del',

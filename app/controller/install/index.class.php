@@ -580,7 +580,7 @@ class installIndex extends Controller {
      */
     private function roleDefault(){
         $administrator = array (
-            'name' => '系统管理员',
+            'name' => LNG('admin.role.administrator'),
             'display' => 1,
             'system' => 1,
             'administrator' => 1,
@@ -590,7 +590,7 @@ class installIndex extends Controller {
         );
 
         $default = array (
-            'name' => '普通用户',
+            'name' => LNG('admin.role.default'),
             'display' => 1,
             'system' => 1,
             'auth' => 'explorer.add,explorer.upload,explorer.view,explorer.download,explorer.share,explorer.remove,explorer.edit,explorer.move,explorer.serverDownload,explorer.search,explorer.unzip,explorer.zip,user.edit,user.fav',
@@ -610,7 +610,7 @@ class installIndex extends Controller {
         $this->in = array(
             "userID"    => 1,
 			"name" 		=> !empty($this->admin['name']) ? $this->admin['name'] : 'admin',
-			"nickName" 	=> '管理员',
+			"nickName" 	=> LNG('admin.role.administrator'),
 			"password" 	=> !empty($this->admin['password']) ? $this->admin['password'] : 'admin',
             "roleID"	=> $this->roleID,
             "groupInfo" => json_encode(array('1'=>'1')),
