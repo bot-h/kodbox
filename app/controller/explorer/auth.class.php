@@ -190,10 +190,11 @@ class explorerAuth extends Controller {
 			return $this->checkShare($parse['id'],trim($parse['param'],'/'),$action);
 		}
 
+		$pathInfo = IO::infoAuth($parse['pathBase']);
+		Hook::trigger("explorer.auth.can",$pathInfo,$action);
 		// source 类型; 新建文件夹 {source:10}/新建文件夹; 去除
 		//文档类型检测：屏蔽用户和部门之外的类型；
 		if($GLOBALS['isRoot'] && $this->config["ADMIN_ALLOW_SOURCE"]) return true;
-		$pathInfo 	= IO::infoAuth($parse['pathBase']);
 		$targetType = $pathInfo['targetType'];
 		// if(!$pathInfo) return true; 
 		if(!$pathInfo){//不存在,不判断文档权限;

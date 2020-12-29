@@ -23,6 +23,6 @@ class adminerPlugin extends PluginBase{
 	}
 	
 	public function index(){
-		header('Location: '.$this->pluginHost.'adminer/index.php');
+		header('Location: '.$this->pluginHost.'adminer/');
 	}
 }

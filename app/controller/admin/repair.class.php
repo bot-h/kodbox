@@ -9,52 +9,50 @@ class adminRepair extends Controller {
 	
 	// File表中,io不存在的文件进行处理;（被手动删除的）
 	public function fileClear(){
+		http_close();
 		Model("File")->refreshData(); //应用计数重置;
-		// $modelSource = Model("Source");
-		// $modelFile   = Model("File");
-		// $list = $modelFile->select();
-		// $notExist = 0;
-		// http_close();
-		
-		// $task = new Task("fileCheck",'',count($list));
-		// foreach ($list as $item) {
-		// 	if(!IO::exist($item['path'])){
-		// 		$notExist ++;
-		// 		$task->task['currentTitle'] = $notExist .'个不存在';
-				
-		// 		$where  = array('fileID'=>$item['fileID']);
-		// 		$source = $modelSource->where($where)->select();
-		// 		foreach ($source as $sourceFile) {
-		// 			$modelSource->remove($sourceFile['sourceID'],false);
-		// 		}
-		// 		$modelFile->where($where)->delete();
-		// 	}
-		// 	$task->update(1);
-		// }
 	}
 
 	// source对应fileID 不存在处理;
 	public function sourceClear(){
+		http_close();
 		$modelSource = Model("Source");
 		$modelFile   = Model("File");
 		$list = $modelSource->select();
 		$notExist = 0;
-		http_close();
-		
-		$task = new Task("SourceCheck",'',count($list));
+		$task = new Task("sourceClear",'',count($list));
 		foreach ($list as $item) {
 			if($item['isFolder'] == '0' && !$modelFile->find($item['fileID'])){
 				$notExist ++;
 				$task->task['currentTitle'] = $notExist .'个不存在';
+				write_log($item['fileID'],'test');
 				$modelSource->remove($item['sourceID'],false);
 			}
 			$task->update(1);
 		}
+		$task->end();
+	}
+		
+	public function resetFileHash(){
+		$model = Model('File');
+		$listFile = $model->select();
+		$task = new Task("resetFileHash",'',count($listFile));
+		foreach ($listFile as $file) {
+			$task->update(1);
+			if(!$file['hashSimple'] || !$file['hashMd5']){
+				$data = array('hashSimple'=>IO::hashSimple($file['path']) );
+				if(!$file['hashMd5']){
+				    $data['hashMd5'] = IO::hashMd5($file['path']);
+				}
+				$model->where(array('fileID'=>$file['fileID']))->save($data);
+			}
+		}
+		$task->end();
+		show_json(count($listFile));
 	}
 
 	// file表中存在, source表中不存在的进行清除;
 	public function fileSourceClear(){
-		
 		// // Source; 历史记录表等;
 		// $modelSource = Model("Source");
 		// $modelFile   = Model("File");

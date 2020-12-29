@@ -84,7 +84,6 @@ class explorerIndex extends Controller{
 	 * 设置文档描述;
 	 */
 	public function setMeta(){
-		$maxLength = 1000;
 		$data = Input::getArray(array(
 			'path'	=> array('check'=>'require'),
 			'data'	=> array('check'=>'require'),
@@ -111,11 +110,11 @@ class explorerIndex extends Controller{
 		static $metaKeys = false;
 		if(!$metaKeys){
 			$metaKeys = array_keys($this->config['settings']['sourceMeta']);
-			$keyArr = array(
-				'systemSort',	// 置顶
-				'systemLock',	// 编辑锁定
-			);
-			$metaKeys = array_merge($metaKeys,$keyArr);
+			$metaKeys = array_merge($metaKeys,array(
+				'systemSort',		// 置顶
+				'systemLock',		// 编辑锁定
+				'systemLockTime',	// 编辑锁定时间
+			));
 		}
 		return in_array($key,$metaKeys);
 	}

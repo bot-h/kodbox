@@ -2,8 +2,7 @@
 <head>
 	<meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=no" />
 	<meta charset="utf-8">
-	<?php $this->link('style/lib/main.css','static');?>
-	<?php $this->link('style/dist/main.css','static');?>
+	<?php $this->link();?>
 	<title><?php echo $fileName;?></title>
 	<style>
 		body {margin: 0;font-family: "Helvetica Neue Light", "Segoe UI Semilight", sans-serif;}
@@ -61,15 +60,13 @@
 					</div>
 				</div>
 				<div class="progress-loading hidden">
-					<div class="moveCircleRight"><i class="icon-spinner"></i></div>
+					<div class="moveCircleRight"><i class="ri-loader-line"></i></div>
 				</div>
 			</div>
 		</div>
 	</div>
 	<div id="MyViewerDiv"></div>
 </body>
-	<?php $this->link('app/dist/vendor.js','static');?>
-	<?php $this->link('app/dist/lib.js','static');?>
 	<script type="text/javascript">
 		var LNG = {
 			"error":"<?php echo LNG('explorer.error');?>",

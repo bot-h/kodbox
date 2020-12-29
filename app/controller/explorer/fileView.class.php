@@ -7,7 +7,6 @@
 */
 
 class explorerFileView extends Controller{
-	private $model;
 	public function __construct(){
 		parent::__construct();
 		$this->model = Model("Source");

@@ -34,7 +34,6 @@ class adminMember extends Controller{
 	 * 根据所在部门获取用户列表
 	 */
 	public function get() {
-		$rootGroupID = 1;
 		$data = Input::getArray(array(
 			"fields"	=> array("check"=>"require",'default'=>''),
 			"status"	=> array("default"=>null)

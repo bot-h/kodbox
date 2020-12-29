@@ -14,7 +14,7 @@
 //配置数据,可在setting_user.php中添加变量覆盖,升级后不会被替换
 $config['settings'] = array( 
 	'downloadUrlTime'	=> 0,			 	//下载地址生效时间，按秒计算，0代表不限制
-	'apiLoginTonken'	=> '',			 	//设定则认为开启服务端api通信登录，同时作为加密密匙
+	'apiLoginToken'		=> '',			 	//设定则认为开启服务端api通信登录，同时作为加密密匙
 	'paramRewrite'		=> false,		 	//开启url 去除? 直接跟参数
 	'ioAvailed'			=> 'local,ftp,oss,qiniu,cos,s3,oos,minio',		//显示的io类型，多个以','分隔
 	'ioFileOutServer'	=> false,
@@ -110,14 +110,14 @@ $config['databaseDefault'] = array(
 );
 
 $config['settings']['appType'] = array(
-	array('type' => 'tools','name' => 'explorer.app.groupTools','class' => 'icon-suitcase'),
-	array('type' => 'game','name' => 'explorer.app.groupGame','class' => 'icon-dashboard'),
-	array('type' => 'movie','name' => 'explorer.app.groupMovie','class' => 'icon-film'),
-	array('type' => 'music','name' => 'explorer.app.groupMusic','class' => 'icon-music'),
-	array('type' => 'life','name' => 'explorer.app.groupLife','class' => 'icon-map-marker'),
-	array('type' => 'others','name' => 'common.others','class' => 'icon-ellipsis-horizontal'),
+	array('type' => 'tools','name' => 'explorer.app.groupTools','class' => 'ri-tools-fill'),
+	array('type' => 'game','name' => 'explorer.app.groupGame','class' => 'ri-gamepad-fill'),
+	array('type' => 'movie','name' => 'explorer.app.groupMovie','class' => 'ri-film-line'),
+	array('type' => 'music','name' => 'explorer.app.groupMusic','class' => 'ri-music-fill-2'),
+	array('type' => 'life','name' => 'explorer.app.groupLife','class' => 'ri-map-pin-fill-2'),
+	array('type' => 'others','name' => 'common.others','class' => 'ri-more-fill'),
 );
-
+$config['fileEditLockTimeout'] = 1200; //默认20分钟; 文件编辑锁默认锁定最长时间; 超过了则自动解锁;
 $config['defaultPlugins'] = array(
 	'adminer','DPlayer','imageExif','jPlayer','officeLive','photoSwipe','picasa','pdfjs',
 	'simpleClock','toolsCommon','VLCPlayer','webodf','yzOffice','webdav',
@@ -159,7 +159,7 @@ $config['settingSystemDefault'] = array(
 	'passwordRule'		=> 'none',		// 限制密码强度;none-不限制;strong-中等强度;strongMore-高强度
 	'loginIpCheck'		=> '0',			// 登陆ip限制开关;
 	'loginIpAllow'		=> '',			// 登陆允许的ip来源; ip白名单;
-	'csrfProtect'		=> '0',		 	// 开启csrf保护	
+	'csrfProtect'		=> '1',		 	// 开启csrf保护	
 	
 	'treeOpen'			=> 'my,myFav,myGroup,rootGroup,recentDoc,fileType,fileTag,driver',//树目录开启功能;
 	'wallpageDesktop'	=> "1,2,3,4,5,6,7,8,9,10,11,12,13",
@@ -181,7 +181,7 @@ $config['settingSystemDefault'] = array(
 		array('name'=>'desktop','type'=>'system','url'=>'desktop','target'=>'_self','use'=>'1'),
 		array('name'=>'explorer','type'=>'system','url'=>'explorer','target'=>'_self','use'=>'1'),
 		array('name'=>'editor','type'=>'system','url'=>'editor','target'=>'_self','use'=>'0'),
-		array('name'=>'官网','url'=>'https://kodcloud.com',"icon"=>"icon-cloud",'target'=>'inline','use'=>'1')
+		array('name'=>'官网','url'=>'https://kodcloud.com',"icon"=>"ri-home-line-3",'target'=>'inline','use'=>'1')
 	),
 );
 
@@ -205,7 +205,8 @@ $config['settingDefault'] = array(
 	'imageThumb'		=> '1',
 	'fileSelect'		=> '1',
 	'displayHideFile'	=> '0',
-	'filePanel'			=> '0',
+	'filePanel'			=> '1',
+	'messageSendType'	=> 'enter', //enter,ctrlEnter
 );
 $config['editorDefault'] = array(
 	'fontSize'		=> '14px',
@@ -267,6 +268,15 @@ $config['settings']['sourceMeta'] = array(
 		"selectType"=> "mutil",
 	),
 );
+
+// name优先识别为多语言key,不存在则以name为原名;
+$config['settings']['userDefaultTag'] = array(
+	array('name'=>"explorer.tag.default1",'style'=>'label-blue-normal'),
+	array('name'=>'explorer.tag.default2','style'=>'label-red-normal'),
+	array('name'=>'explorer.tag.default3','style'=>'label-yellow-normal'),
+	array('name'=>"2020",'style'=>'label-green-normal'),
+);
+
 
 /**
  * 文档类型筛选
@@ -349,6 +359,7 @@ $config['authNotNeedLogin'] = array(
 	'test.*',
 	'user.index.*',
 	'user.bind.*',
+	'user.sso.*',
 	'user.regist.*',
 	'user.view.*',
 	'explorer.share.*',
@@ -369,6 +380,7 @@ $config['authAllowAction'] = array(
 	'explorer.userShare.get',
 	'explorer.userShare.myShare',
 	'user.setting.notice',
+	'user.setting.taskList','user.setting.taskAction',
 	
 	//临时，搜索分享中使用; 设置用户权限or设置用户部门；
 	'admin.role.get','admin.job.get','admin.auth.get',
@@ -404,7 +416,7 @@ $config['authRoleAction']= array(
 	'explorer.zip'			=> array('explorer.index'=>'zip,zipDownload'),
 
 	'user.edit'				=> array(
-		'user.setting'	=> 'setConfig,setUserInfo,setHeadImage,uploadHeadImage',
+		'user.setting'	=> 'setConfig,setUserInfo,setHeadImage,uploadHeadImage,userChart,userLog',
 		// 'user.bind'		=> 'bindApi,bindMetaInfo,oauth,bindWithApp', //被全开放了, 构造函数中自行权限检测;
 	),
 	'user.fav' => array(
@@ -441,7 +453,10 @@ $config['authRoleAction']= array(
 	),
 
 	'admin.storage.list'	=> array('admin.storage'=>'get'),
-	'admin.storage.edit'	=> array('admin.storage'=>'add,edit,remove'),
+	'admin.storage.edit'	=> array(
+		'admin.storage'	=> 'add,edit,remove',
+		'admin.backup'	=> 'config,get,remove'
+	),
 
 	'admin.autoTask.list'	=> array('admin.autoTask'=>'get'),
 	'admin.autoTask.edit'	=> array('admin.autoTask'=>'add,edit,enable,remove,run,taskStart,taskRun,taskRunEvent'),

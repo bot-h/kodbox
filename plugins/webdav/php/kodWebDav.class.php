@@ -165,7 +165,7 @@ class kodWebDav extends HttpDavServer {
 			$this->pathPutRemoveTemp($uploadPath);
 			$this->pathPutRemoveTemp($uploadPath);
 		}
-		// $this->plugin->log("upload=$uploadPath;path=".$path.';res='.$result.';temp='.$tempPath.";local=$localFile;");
+		$this->plugin->log("upload=$uploadPath;path=$path;res=$result;local=$localFile;");
 		return $result;
 	}
 	private function pathPutRemoveTemp($path){
@@ -187,11 +187,33 @@ class kodWebDav extends HttpDavServer {
 		$pathUrl = $this->pathGet();
 		$destURL = $this->pathGet(true);
 		$this->plugin->log("move from=$path;to=$dest;$pathUrl;$destURL");
-		
+
 		// 目录不变,重命名
 		$io = IO::init('/');
 		if($io->pathFather($pathUrl) == $io->pathFather($destURL)){
 			if(!$this->can($path,'edit')) return false;
+			$this->plugin->log("move edit=$path;$pathUrl;$destURL;dest=".intval($this->pathExists($dest)));
+			$fromExt = get_path_ext($pathUrl);
+			$toExt   = get_path_ext($destURL);
+			$officeExt = array('doc','docx','xls','xlsx','ppt','pptx');
+			/**
+			 * office 编辑保存最后落地时处理（导致历史记录丢失）； 
+			 * 0. 上传~tmp1601041332501525796.TMP //锁定,上传,解锁;
+			 * 1. 移动 test.docx => test~388C66.tmp 				// 改造,识别到之后不进行移动重命名;
+			 * 2. 移动 ~tmp1601041332501525796.TMP => test.docx; 	// 改造;目标文件已存在则更新文件;删除原文件;
+			 * 3. 删除 test~388C66.tmp  
+			 */
+			if( $this->isWindows() && $toExt == 'tmp' && in_array($fromExt,$officeExt) ){
+				$result =  IO::mkfile($dest);
+			    $this->plugin->log("move mkfile=$path;$pathUrl;$destURL;res=".$result);
+			    return $result;
+			}
+			// 都存在则覆盖；
+			if( $this->pathExists($path) && $this->pathExists($dest) ){
+				$result = IO::saveFile($path,$dest);
+				$this->plugin->log("move saveFile=$path;res=".$dest.';res='.$result);
+				return $result;
+			}			
 			return IO::rename($path,$io->pathThis($destURL));
 		}
 		
@@ -209,5 +231,8 @@ class kodWebDav extends HttpDavServer {
 		if(!$this->can($path,'download')) return false;
 		if(!$this->can($dest,'edit')) return false;
 		return IO::copy($path,$dest);
+	}
+	private function isWindows(){
+	    return stristr($_SERVER['HTTP_USER_AGENT'],'Microsoft-WebDAV-MiniRedir');
 	}
 }

@@ -16,38 +16,43 @@ class explorerList extends Controller{
 		$path     = $thePath ? $thePath : $this->in['path'];
 		$path     = $path != '/' ? rtrim($path,'/') : '/';//路径保持统一;
 		$path 	  = $this->checkDesktop($path);
-		$pathInfo = KodIO::parse($path);
-		$pathID   = $pathInfo['id'];
-		switch($pathInfo['type']){
+		$pathParse= KodIO::parse($path);
+		switch($pathParse['type']){
 			case KodIO::KOD_USER_FAV:			$data = Action('explorer.fav')->get();break;
 			case KodIO::KOD_USER_RECYCLE:		$data = $this->model->listUserRecycle();break;
-			case KodIO::KOD_USER_FILE_TAG:		$data = $this->model->listUserTag($pathID);break;
-			case KodIO::KOD_USER_FILE_TYPE:		$data = $this->model->listPathType($pathID);break;
+			case KodIO::KOD_USER_FILE_TAG:		$data = $this->model->listUserTag($pathParse['id']);break;
+			case KodIO::KOD_USER_FILE_TYPE:		$data = $this->model->listPathType($pathParse['id']);break;
 			case KodIO::KOD_USER_RECENT:		$data = $this->listRecent();break;
-			case KodIO::KOD_GROUP_ROOT_SELF:	$data = Action('explorer.listGroup')->groupSelf($pathInfo);break;
+			case KodIO::KOD_GROUP_ROOT_SELF:	$data = Action('explorer.listGroup')->groupSelf($pathParse);break;
 			case KodIO::KOD_USER_SHARE:			$data = Action('explorer.userShare')->myShare();break;
 			case KodIO::KOD_USER_SHARE_TO_ME:	$data = Action('explorer.userShare')->shareToMe();break;
-			case KodIO::KOD_SHARE_ITEM:			$data = Action('explorer.userShare')->sharePathList($pathInfo);break;
+			case KodIO::KOD_SHARE_ITEM:			$data = Action('explorer.userShare')->sharePathList($pathParse);break;
 			case KodIO::KOD_SHARE_LINK:			$data = Action('explorer.share')->pathList();break;
-			case KodIO::KOD_SEARCH:				$data = Action('explorer.listSearch')->listSearch($pathInfo);break;
-			case KodIO::KOD_BLOCK:				$data = $this->blockChildren($pathID);break;
+			case KodIO::KOD_SEARCH:				$data = Action('explorer.listSearch')->listSearch($pathParse);break;
+			case KodIO::KOD_BLOCK:				$data = $this->blockChildren($pathParse['id']);break;
 			case KodIO::KOD_SOURCE:				$data = IO::listPath($path);break;
 			case KodIO::KOD_IO:					$data = IO::listPath($path);break;
 			default:$data = IO::listPath($path);break;
 		}
-		$this->dataParse($data,$path);
-		$this->checkExist($data,$pathInfo);
-		$this->pageParse($data);
-		$this->dataParseHidden($data);
-		$data = Action('explorer.listGroup')->groupChildAppend($data);
-		$data = Action('explorer.fav')->favAppend($data);
-		$this->pageReset($data);
+		$data = $this->parseData($data,$path);
+		$data = Hook::filter('explorer.list.path.parse',$data);
 
-		//pr_trace();exit;
 		if($thePath) return $data;
 		show_json($data);
 	}
-	
+	public function parseData(&$data,$path){
+		$pathParse= KodIO::parse($path);
+		$this->parseAuth($data,$path);
+		$this->checkExist($data,$pathParse);
+		$this->pageParse($data);
+		$this->parseDataHidden($data);
+		$data = Action('explorer.listGroup')->groupChildAppend($data);
+		$data = Action('explorer.fav')->favAppend($data);
+		$this->pageReset($data);
+		
+		//pr_trace();exit;
+		return $data;
+	}	
 	
 	// 桌面文件夹自动检测;不存在处理;
 	private function checkDesktop($path){
@@ -179,10 +184,11 @@ class explorerList extends Controller{
 	}
 	private function pageReset(&$data){
 		if(!isset($data['pageInfo'])) return;
-		$total = count($data['fileList']) + count($data['folderList']) + count($data['groupList']);
+		$group = isset($data['groupList']) ? count($data['groupList']) : 0;
+		$total = count($data['fileList']) + count($data['folderList']) + $group;
 		$pageInfo = $data['pageInfo'];
 		if(	$pageInfo['page'] == 1 && $pageInfo['pageTotal'] == 1){
-			$data['pageInfo']['totalNum'] = $total;			
+			$data['pageInfo']['totalNum'] = $total;
 		}
 
 		// 某一页因为权限全部过滤掉内容, 则加大每页获取条数;
@@ -246,6 +252,8 @@ class explorerList extends Controller{
 		$current = false;
 		if($loadInfo){
 			$current = IO::info($path,false);
+		}else if(!$driver){
+			$current = array('exists'=>false,'type'=>'folder');
 		}else if(!$info['type'] && $driver->getType() == 'local'){
 			// 其他网络存储不在此获取信息; 收藏夹列表;
 			$current = IO::info($path,false);
@@ -279,10 +287,12 @@ class explorerList extends Controller{
 
 		if($info['type'] == KodIO::KOD_IO ){
 			$storage = Model('Storage')->listData($info['id']);
-			$current['icon'] = 'io-'.strtolower($storage['driver']);
-			$current['pathDisplay'] = str_replace($info['pathBase'],$storage['name'],$current['path']);
-			if( !strstr(trim($current['pathDisplay'],'/'),'/') ){
-				$current['name'] = $storage['name'];
+			if($storage){
+				$current['icon'] = 'io-'.strtolower($storage['driver']);
+				$current['pathDisplay'] = str_replace($info['pathBase'],$storage['name'],$current['path']);
+				if( !strstr(trim($current['pathDisplay'],'/'),'/') ){
+					$current['name'] = $storage['name'];
+				}
 			}
 		}
 		$current['path'] = $path;
@@ -293,7 +303,7 @@ class explorerList extends Controller{
 	 * 递归处理数据；自动加入打开等信息
 	 * 如果是纯数组: 处理成 {folderList:[],fileList:[],thisPath:xxx,current:''}
 	 */
-	private function dataParse(&$data,$path){
+	private function parseAuth(&$data,$path){
 		if( !isset($data['folderList']) || 
 			!is_array($data['folderList'])
 		) { //处理成统一格式
@@ -310,7 +320,7 @@ class explorerList extends Controller{
 		foreach ($data['folderList'] as &$item) {
 			if( isset($item['children']) ){
 				$item['isParent'] = true;
-				$this->dataParse($item['children'],$item['path']);
+				$this->parseAuth($item['children'],$item['path']);
 			}
 			$item['type'] = isset($item['type']) ? $item['type'] : 'folder';
 		}
@@ -321,7 +331,7 @@ class explorerList extends Controller{
 	}
 	
 	// 显示隐藏文件处理; 默认不显示隐藏文件;
-	private function dataParseHidden(&$data){
+	private function parseDataHidden(&$data){
 		if(Model('UserOption')->get('displayHideFile') == '1') return;
 		$pathHidden = Model('SystemOption')->get('pathHidden');
 		$pathHidden = explode(',',$pathHidden);
@@ -438,7 +448,7 @@ class explorerList extends Controller{
 			'fileTag'	=>	array('name'=>LNG('common.tag'),'open'=>false,'children'=>true),
 			'driver'	=>	array('name'=>LNG('common.mount').' (admin)','open'=>false),
 		);
-		return $list;		
+		return $list;
 	}
 	
 	/**

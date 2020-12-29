@@ -88,7 +88,7 @@ class Mailer {
 		}
 		// 允许自定义端口
 		$parts = parse_url($data['host']);
-		$data['host'] = $parts['host'];
+		$data['host'] = isset($parts['host']) ? $parts['host'] : $parts['path'];
 		$data['port'] = isset($parts['port']) ? $parts['port'] : 465;
 		if(!isset($data['signature'])) $data['signature'] = 'kodbox';
 

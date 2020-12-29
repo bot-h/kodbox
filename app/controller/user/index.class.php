@@ -27,6 +27,7 @@ class userIndex extends Controller {
 		$this->loginCheck();    //5-15ms session读取写入
 		KodIO::initSystemPath();
 		Model('Plugin')->init();//5-10ms
+		Action('filter.index')->init();
 		Hook::bind('beforeShutdown','user.index.shutdownEvent');
 	}
 	public function shutdownEvent(){
@@ -41,10 +42,10 @@ class userIndex extends Controller {
 			define('STATIC_PATH',$GLOBALS['config']['settings']['staticPath']);
 		}
 	}
-	private function initSession(){ 
+	private function initSession(){
+		$systemPassword = Model('SystemOption')->get('systemPassword');
 		if(isset($_REQUEST['accessToken'])){
-			$pass = Model('SystemOption')->get('systemPassword');
-			$pass = substr(md5('kodbox_'.$pass),0,15);
+			$pass = substr(md5('kodbox_'.$systemPassword),0,15);
 			$sessionSign = Mcrypt::decode($_REQUEST['accessToken'],$pass);
 			if(!$sessionSign){
 				show_json(LNG('common.loginTokenError'),false);
@@ -55,6 +56,8 @@ class userIndex extends Controller {
 		if(!Session::get('kod')){
 			show_tips(LNG('explorer.sessionSaveError'));
 		}
+		// 设置csrf防护;
+		if(!Cookie::get('CSRF_TOKEN')){Cookie::set('CSRF_TOKEN',rand_string(16));}
 	}
 	private function initSetting(){
 		$sysOption = Model('SystemOption')->get();
@@ -177,7 +180,7 @@ class userIndex extends Controller {
 	 */
 	public function logout() {
 		Session::destory();
-		Cookie::remove(SESSION_ID,true); //保持
+		Cookie::remove(SESSION_ID,true);
 		Cookie::remove('kodToken');
 		show_json('ok');
 	}
@@ -219,7 +222,8 @@ class userIndex extends Controller {
 	}
 	private function loginWithToken(){
 		if (!isset($this->in['loginToken'])) return false;
-		$apiToken = $this->config['settings']['apiLoginTonken'];
+		// 兼容旧版错误拼写
+		$apiToken = $this->config['settings']['apiLoginToken'];
 		$param = explode('|', $this->in['loginToken']);
 		if (strlen($apiToken) < 5 ||
 			count($param) != 2 ||

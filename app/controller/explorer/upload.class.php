@@ -7,7 +7,6 @@
 */
 
 class explorerUpload extends Controller{
-	private $model;
 	public function __construct(){
 		parent::__construct();
 		$this->model = Model("Source");
@@ -18,6 +17,7 @@ class explorerUpload extends Controller{
 	}
 	
 	
+	// 通过上传内容获得上传临时文件;(插件;文件编辑保存)
 	public function fileUploadTemp(){
 		$this->in["chunkSize"] = '0';
 		$this->in["size"] = '0';
@@ -64,11 +64,19 @@ class explorerUpload extends Controller{
 		$uploader->clearData();//清空上传临时文件;
 		// pr($localFile,$path,$savePath,$uploader,$this->in);exit;
 		if($path){
-			show_json(LNG("explorer.upload.success"),true,$path);
+			show_json(LNG("explorer.upload.success"),true,$this->uploadInfo($path));
 		}else{
 			show_json(LNG("explorer.upload.error"),false);
 		}
 	}
+	private function uploadInfo($path){
+		if(!$GLOBALS['UPLOAD_ATTACHMENT']) return $path;
+		$info = IO::info($path);
+		$info = array_field_key($info,array("ext",'name','createTime','size'));
+		$info['link'] = Action('explorer.share')->link($path);
+		return $info;
+	}
+	
 	
 	// 第三方上传获取凭证
 	private function authorizeCheck(){
@@ -129,7 +137,7 @@ class explorerUpload extends Controller{
 		){
 			$path = IO::uploadFileByID($savePath,$file['fileID'],$repeat);
 			$uploader->clearData();//清空上传临时文件;
-			show_json(LNG('explorer.upload.secPassSuccess'),true,$path);
+			show_json(LNG('explorer.upload.secPassSuccess'),true,$this->uploadInfo($path));
 		}else{
 			show_json(LNG('explorer.success'),true,$infoData);
 		}
@@ -155,7 +163,7 @@ class explorerUpload extends Controller{
 			show_json(LNG("explorer.upload.error"), false);
 		}
 		$path = IO::addFileByRemote($savePath, $remotePath,$paramMore,$this->in['name'],$repeat);
-		show_json(LNG("explorer.upload.success"),true,$path);
+		show_json(LNG("explorer.upload.success"),true,$this->uploadInfo($path));
 	}
 
 	// 远程下载
@@ -193,8 +201,8 @@ class explorerUpload extends Controller{
 		}
 	}
 	private function serverDownloadCheck($uuid){
+		$data = Session::get($uuid);
 		if ($this->in['type'] == 'percent') {
-			$data = Session::get($uuid);
 			if (!$data) show_json('uuid error',false);
 			$result = array(
 				'supportRange' => $data['supportRange'],

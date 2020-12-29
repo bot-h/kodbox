@@ -2986,9 +2986,11 @@
                             throw new Error('Can\'t add external files.');
                         }
                         file = new File( this._ruid, file );
-                    }
-    
-                    file = new WUFile( file );
+					}
+					// add by warlee; 添加文件/文件夹类型状态;
+    				file.isFile = file.source.isDirectory ? false : true;
+					file.fullPath = file.source.fullPath || file.source.webkitRelativePath || '';
+					file = new WUFile( file );
                 }
     
                 return file;
@@ -3095,11 +3097,6 @@
 			// 处理子文件内容过多的情况;
 			// add-file-sync
 			addFileSync:function(fileQueen,file){
-				file.isFile = true;
-				if(file.source.isDirectory){
-					file.isFile = false;
-				}
-				file.fullPath = file.source.fullPath || file.source.webkitRelativePath || '';				
 				var theFile = this._addFile(file);
 				if( theFile ){
 					fileQueen.push(theFile);

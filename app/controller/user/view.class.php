@@ -16,7 +16,7 @@ class userView extends Controller{
 				'phpVersion'	=> PHP_VERSION,
 				'appApi'		=> rtrim(APP_HOST,'/').'/index.php?',
 				'APP_HOST'		=> APP_HOST,
-				'ENV_DEV'		=> !!STATIC_DEV,
+				'ENV_DEV'		=> GLOBAL_DEBUG,
 				'staticPath'	=> STATIC_PATH,
 				'version'		=> KOD_VERSION,
 				'build'			=> KOD_VERSION_BUILD,

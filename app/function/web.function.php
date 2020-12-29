@@ -86,8 +86,8 @@ function this_url(){
 }
 
 //解决部分主机不兼容问题
-function webroot_path($basic_path){
-	$index = path_clear(BASIC_PATH.'index.php');
+function webroot_path($basicPath){
+	$index = path_clear($basicPath.'index.php');
 	$uri   = path_clear($_SERVER["DOCUMENT_URI"]);
 	
 	// 兼容 index.php/explorer/list/path; 路径模式;
@@ -105,6 +105,21 @@ function webroot_path($basic_path){
 		$path = substr($index,0,strlen($index)-strlen($uri));
 		return rtrim($path,'/').'/';
 	}
+	
+	// 子目录sso调用情况兼容;
+	if($_SERVER['SCRIPT_FILENAME'] && $_SERVER["DOCUMENT_URI"]){
+		$index = path_clear($_SERVER['SCRIPT_FILENAME']);
+		$uri   = path_clear($_SERVER["DOCUMENT_URI"]);		
+		// 兼容 index.php/test/todo 情况;
+		if( strstr($uri,'.php/')){
+			$uri = substr($uri,0,strpos($uri,'.php/')).'.php';
+		}		
+		if( substr($index,- strlen($uri) ) == $uri){
+			$path = substr($index,0,strlen($index)-strlen($uri));
+			return rtrim($path,'/').'/';
+		}
+	}
+	
 	return $_SERVER['DOCUMENT_ROOT'];
 }
 
@@ -137,7 +152,7 @@ function is_wap(){
  * 后续代码可以继续运行；例如日志、统计等代码；后续输出将不再生效；
  */
 function http_close(){
-	ignore_timeout(0);
+	ignore_timeout();
 	static $firstRun = false;
 	if($firstRun) return; //避免重复调用;
 	
@@ -214,11 +229,8 @@ function curl_progress(){
 // http://blog.csdn.net/havedream_one/article/details/52585331 
 // php7.1 curl上传中文路径文件失败问题？【暂时通过重命名方式解决】
 function url_request($url,$method='GET',$data=false,$headers=false,$options=false,$json=false,$timeout=3600){
-	if(!$url){
-		return array(
-			'data'		=> 'url error! url='.$url,
-			'code'		=> 0
-		);
+	if(!$url || !request_url_safe($url) ){
+		return array('data'=> 'url error! url='.$url,'code'=> 0);
 	}
 	ignore_timeout();
 	$ch = curl_init();
@@ -391,9 +403,8 @@ function curl_get_contents($url){
 }
 
 function get_headers_curl($url,$timeout=10,$depth=0,&$headers=array()){
-	if(!function_exists('curl_init')){
-		return false;
-	}
+	if(!function_exists('curl_init')) return false;
+	if(!request_url_safe($url)) return false;
 	if ($depth >= 10) return false;
 	$ch = curl_init(); 
 	curl_setopt($ch, CURLOPT_URL,$url);
@@ -453,8 +464,7 @@ function request_url_safe($url){
 	while (strstr($link,'../')) {
 		$link = str_replace('../', '/', $link);
 	}
-	if( substr($link,0,6) != "ftp://" &&
-		substr($link,0,7) != "http://" &&
+	if( substr($link,0,7) != "http://" &&
 		substr($link,0,8) != "https://" ){
 		return false;
 	}
@@ -657,6 +667,11 @@ function parse_incoming(){
 	}	
 	$return = array();
 	$return = array_merge($_GET,$_POST);
+	foreach ($return as $itemKey => $itemValue) {
+		if(is_array($itemValue)){
+			unset($return[$itemKey]);
+		}
+	}
 	$remote = array_get_index($return,0);
 	
 	//路由支持以参数形式传入;兼容没有value的GET参数key被忽略掉的情况;UC手机浏览器;

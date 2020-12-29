@@ -124,7 +124,7 @@ class adminNotice extends Controller{
 	public function noticeRemove($id = false){
 		$update = array('delete' => 1);
 		if($id) { // 单个删除
-			$this->model->userNoticeEdit($data['id'], $update);
+			$this->model->userNoticeEdit($id, $update);
 		}else{ // 清空全部
 			$list = $this->model->userNoticeGet();
 			foreach($list as $value) {

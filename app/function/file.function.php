@@ -454,7 +454,7 @@ function del_file($fullpath){
 function del_dir($dir){
 	if(!file_exists($dir) || !is_dir($dir)) return true;
 	if (!$dh = opendir($dir)) return false;
-	@set_time_limit(0);
+	set_timeout();
 	while (($file = readdir($dh)) !== false) {
 		if ($file =='.' || $file =='..') continue;
 		$fullpath = rtrim($dir, '/') . '/' . $file;
@@ -495,7 +495,7 @@ function copy_dir($source, $dest){
 	if (!$dest) return false;
 	if (is_dir($source) && $source == substr($dest,0,strlen($source))) return false;//防止父文件夹拷贝到子文件夹，无限递归
 
-	@set_time_limit(0);
+	set_timeout();
 	$result = true;
 	if (is_file($source)) {
 		if ($dest[strlen($dest)-1] == '/') {
@@ -551,7 +551,7 @@ function move_path($source,$dest,$repeat_add='',$repeat_type='replace'){
 		}
 	}
 
-	@set_time_limit(0);
+	set_timeout();
 	if(is_file($source)){
 		return move_file($source,$dest,$repeat_add,$repeat_type);
 	}
@@ -881,7 +881,7 @@ function is_text_file($ext){
  * 支持fopen的打开都可以；支持本地、url
  */
 function file_download_this($from, $fileName,$headerSize=0){
-	@set_time_limit(0);
+	set_timeout();
 	$fileTemp = $fileName.'.downloading';
 	if ($fp = @fopen ($from, "rb")){
 		if(!$downloadFp = @fopen($fileTemp, "wb")){

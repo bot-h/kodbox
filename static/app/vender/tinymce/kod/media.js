@@ -86,7 +86,7 @@ tinymce.pluginResetAdd.push(function(editor){
         $(desc).appendTo($field);
         
         // 添加文件选择按钮;
-        var selectBtn = '<i class="btn btn-default btn-sm pathSelect font-icon icon-folder"\
+        var selectBtn = '<i class="btn btn-default btn-sm pathSelect font-icon ri-folder-fill-3"\
             ext="mov|mp4|m4v|ogg|webm|ogv" \
             title="从网盘选择视频" title-timeout="100"></i>';
         var $selectBtn = $(selectBtn).appendTo($field.find('.tox-control-wrap'));
@@ -124,7 +124,7 @@ tinymce.pluginResetAdd.push(function(editor){
         if($field.find('.pathSelect').length) return;
 
         $field.addClass('image-field');
-        var selectBtn = '<i class="btn btn-default btn-sm pathSelect font-icon icon-folder"\
+        var selectBtn = '<i class="btn btn-default btn-sm pathSelect font-icon ri-folder-fill-3"\
             ext="png|jpg|gif|jpeg|ico|svg" \
             title="从网盘选择图片" title-timeout="100"></i>';
         var $selectBtn = $(selectBtn).appendTo($field.find('.tox-control-wrap'));

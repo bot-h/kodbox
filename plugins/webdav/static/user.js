@@ -17,7 +17,7 @@ ClassBase.define({
 			<span class="title" style="display:inline-block;width:100px;">{{item.title}}:</span>\
 			<input type="text" value="{{item.value}}" readonly="" style="width:45%;">\
 			<span class="input-title input-title-right kui-btn" action="copy">\
-				<i class="font-icon icon-copy"></i>{{LNG["explorer.copy"]}}</span>\
+				<i class="font-icon ri-file-copy-line-2"></i>{{LNG["explorer.copy"]}}</span>\
 		</div>\
 		{{/each}}';
 		var data = [
@@ -48,7 +48,7 @@ ClassBase.define({
 				"type":"html",
 				"display":"<b>webdav "+LNG['common.address']+"</b>",
 				"value":"<input type='text' value='"+this.webdavPath+"' readonly style='width:70%;' />\
-				<span class='input-title input-title-right kui-btn' action='copy'><i class='font-icon icon-copy'></i>"+LNG['explorer.copy']+"</span>"
+				<span class='input-title input-title-right kui-btn' action='copy'><i class='font-icon ri-file-copy-line-2'></i>"+LNG['explorer.copy']+"</span>"
 			},
 			"openMore":{
 				"type":"button",
@@ -56,7 +56,7 @@ ClassBase.define({
 				"value":"",//默认值；同checkbox
 				"info":{
 					"1":{ //按钮名称
-						"display":LNG['webdav.user.morePath']+"<b class='caret'></b>",
+						"display":LNG['webdav.user.morePath']+" <b class='caret'></b>",
 						"className":"btn-default btn-sm",
 						"attr":{"style":"margin-left:20%;"}
 					}
@@ -70,11 +70,11 @@ ClassBase.define({
 			"help":{
 				"display":"<b>"+LNG['webdav.help.title']+"</b>","value":
 				"<div class='info-alert info-alert-green align-left can-select can-right-menu p-10 pl-30'>\
-				<h6><i class='icon-windows font-icon ml--25 mr-5'></i>"+LNG['webdav.help.windows']+".\
+				<h6><i class='ri-windows-fill font-icon ml--25 mr-5'></i>"+LNG['webdav.help.windows']+".\
 				<p class='info-alert info-alert-green align-left mt-10'>"+LNG['webdav.help.windowsTips']+
 				";  <a href='"+pluginApi+"' target='_blank' class='btn btn-sm btn-default' style='border-radius:3px;'>"+LNG['common.download']+"</a></p></h6><hr/>\
-				<h6><i class='icon-apple font-icon ml--25 mr-5'></i>"+LNG['webdav.help.mac']+"</h6>\
-				<h6><i class='icon-linux font-icon ml--25 mr-5'></i>"+LNG['webdav.help.others']+"</h6>\
+				<h6><i class='ri-apple-fill font-icon ml--25 mr-5'></i>"+LNG['webdav.help.mac']+"</h6>\
+				<h6><i class='ri-ubuntu-fill font-icon ml--25 mr-5'></i>"+LNG['webdav.help.others']+"</h6>\
 				</div>"
 			},
 			

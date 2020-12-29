@@ -403,7 +403,8 @@ class S3 {
 	public static function deleteBucket($bucket) {
 		$rest = new S3Request('DELETE', $bucket, '', self::$endpoint);
 		$rest = $rest->getResponse();
-		return self::__execReponse($rest, __FUNCTION__, 1, array($bucket), 204);
+		$code = $rest->code == '200' ? 200 : 204;
+		return self::__execReponse($rest, __FUNCTION__, 1, array($bucket), $code);
 	}
 
 	/**
@@ -1015,7 +1016,7 @@ class S3 {
 	 *
 	 * @return mixed | false
 	 */
-	public static function copyObject($srcBucket, $srcUri, $bucket, $uri, $acl = self::ACL_PRIVATE, $metaHeaders = array(), $requestHeaders = array(), $storageClass = self::STORAGE_CLASS_STANDARD) {
+	public static function copyObject($srcBucket, $srcUri, $bucket, $uri, $acl = self::ACL_PRIVATE, $metaHeaders = array(), $requestHeaders = array(), $storageClass = self::STORAGE_CLASS_STANDARD, $returnBody = false) {
 		$rest = new S3Request('PUT', $bucket, $uri, self::$endpoint);
 		$rest->setHeader('Content-Length', 0);
 		foreach ($requestHeaders as $h => $v) {
@@ -1033,10 +1034,10 @@ class S3 {
 			$rest->setAmzHeader('x-amz-metadata-directive', 'REPLACE');
 		}
 
-		$rest = $rest->getResponse();
+		$rest = $rest->getResponse(true);
 		if (!$body = self::__execReponse($rest, __FUNCTION__, 0, array($srcBucket, $srcUri, $bucket, $uri)))
 			return false;
-		
+		if($returnBody) return $body;
 		return isset($body['LastModified'], $body['LastModified']) ? true : false;
 	}
 
@@ -1070,8 +1071,8 @@ class S3 {
 	public static function deleteObject($bucket, $uri) {
 		$rest = new S3Request('DELETE', $bucket, $uri, self::$endpoint);
 		$rest = $rest->getResponse();
-		
-		return self::__execReponse($rest, __FUNCTION__, 1, array(), 204);
+		$code = $rest->code == '200' ? 200 : 204;
+		return self::__execReponse($rest, __FUNCTION__, 1, array(), $code);
 	}
 
 	/**
@@ -1837,8 +1838,19 @@ final class S3Request {
 		// Parse body into XML
 		if ($this->response->error === false && isset($this->response->headers['type']) &&
 			$this->response->headers['type'] == 'application/xml' && isset($this->response->body)) {
-			if(stripos($this->response->body, '<?xml')) $this->response->body = stristr($this->response->body,'<?xml');
-			$this->response->body = simplexml_load_string($this->response->body);
+			if (substr($this->response->body, 0, 4) == 'HTTP') {
+				$temp = explode(PHP_EOL, $this->response->body);
+				$body = array();
+				foreach($temp as $value) {
+					if(stripos($value, ':') === false) continue;
+					$item = explode(':', trim($value));
+					$body[$item[0]] = $item[1];
+				}
+				$this->response->body = $body;
+			}else{
+				if(stripos($this->response->body, '<?xml')) $this->response->body = stristr($this->response->body,'<?xml');
+				$this->response->body = simplexml_load_string($this->response->body);
+			}
 
 			// Grab S3 errors
 			if (!in_array($this->response->code, array(200, 204, 206)) &&
@@ -1959,7 +1971,8 @@ final class S3Request {
 				$this->response->headers['size'] = (int) $value;
 			} elseif ($header == 'Content-Type') {
 				$this->response->headers['type'] = $value;
-			} elseif ($header == 'ETag') {
+			// } elseif ($header == 'ETag') {
+			} elseif (strtolower($header) == 'etag') {
 				$this->response->headers['hash'] = $value[0] == '"' ? substr($value, 1, -1) : $value;
 			} elseif (preg_match('/^x-amz-meta-.*$/', $header)) {
 				$this->response->headers[$header] = $value;

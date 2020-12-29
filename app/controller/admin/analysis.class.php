@@ -14,7 +14,11 @@ class adminAnalysis extends Controller{
     }
 
     public function chart(){
-        $result = $this->model->fileChart();
+        $data = Input::getArray(array(
+            'userID'    => array("check"=>"int","default"=>null),
+            'groupID'   => array("check"=>"int","default"=>null),
+        ));
+        $result = $this->model->fileChart($data);
         show_json($result);
     }
 

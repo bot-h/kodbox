@@ -68,22 +68,6 @@ class adminSetting extends Controller {
 		show_json(LNG('user.sendSuccess'), true);
 	}
 	
-	public function resetFileHash(){
-		$model = Model('File');
-		$listFile = $model->field('*')->select();
-		foreach ($listFile as $file) {
-			if(!$file['hashSimple'] || !$file['hashMd5']){
-				$data = array('hashSimple'=>IO::hashSimple($file['path']) );
-				if(!$file['hashMd5']){
-				    $data['hashMd5'] = IO::hashMd5($file['path']);
-				}
-				$model->where(array('fileID'=>$file['fileID']))->save($data);
-			}
-		}
-		show_json(count($listFile));
-	}
-	
-	
 	/**
 	 * 动态添加菜单;
 	 */

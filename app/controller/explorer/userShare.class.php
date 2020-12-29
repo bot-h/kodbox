@@ -241,7 +241,7 @@ class explorerUserShare extends Controller{
 	 */
 	public function del() {
 		$list  = Input::get('dataArr','json');
-		$res   = $this->model->remove($list);
+		$res   = $this->model->remove($list, USER_ID);
 		$msg  = !!$res ? LNG('explorer.success'): LNG('explorer.error');
 		show_json($msg,!!$res);
 	}

@@ -150,7 +150,46 @@ class adminLog extends Controller{
             'is_wap' => is_wap(),
             'ua' => isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : ''
         );
+        if(isset($this->in['HTTP_X_PLATFORM'])) {
+            $data['is_wap'] = true;
+            $data['HTTP_X_PLATFORM'] = $this->in['HTTP_X_PLATFORM'];
+        }
         $action = 'user.index.loginSubmit';
         return $this->model->addLog($action, $data);
+    }
+
+    /**
+     * 用户文档日志
+     * @return void
+     */
+    public function userLog(){
+        $userID = Input::get('userID', 'int');
+        // 获取文件操作类型
+		$typeList = $this->model->allTypeList();
+		$types = array();
+		foreach($typeList as $key => $value) {
+			if(strpos($key, 'file.') === 0) $types[] = $key;
+		}
+		$add = array(
+			'explorer.index.fileDownload',
+			'explorer.fav.add',
+			'explorer.fav.del'
+		);
+        $types = array_merge($types, $add);
+		$data = array(
+			'userID' => $userID,
+			'type'	 => implode(',', $types)
+		);
+		$res = $this->model->get($data);
+		foreach($res['list'] as $i => &$item) {
+			$value = array(
+				'type' 			=> $item['type'],
+				'createTime'	=> $item['createTime'],
+				'title'			=> $item['title'],
+				'address'		=> $item['address']
+			);
+			$item = array_merge($value, $item['desc']);
+		}
+		show_json($res);
     }
 }

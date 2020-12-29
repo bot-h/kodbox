@@ -60,14 +60,9 @@ class explorerTag extends Controller{
 	
 	private function initUserData(){
 		if(Model('UserOption')->get('userTagInit','flag') == 'ok') return;
-		$list = array(
-			array('name'=>LNG('explorer.tag.default1'),'style'=>'label-blue-normal'),
-			array('name'=>LNG('explorer.tag.default2'),'style'=>'label-red-normal'),
-			array('name'=>LNG('explorer.tag.default3'),'style'=>'label-yellow-normal'),
-			array('name'=>"2020",'style'=>'label-green-normal'),
-		);
+		$list = $GLOBALS['config']['settings']['userDefaultTag'];
 		foreach ($list as $item) {
-			$this->model->add($item['name'],$item['style']);
+			$this->model->add(LNG($item['name']),$item['style']);
 		}
 		Model('UserOption')->set('userTagInit','ok','flag');
 	}

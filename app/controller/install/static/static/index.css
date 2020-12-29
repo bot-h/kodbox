@@ -194,8 +194,7 @@
 
 .icon{
     display: inline-block;
-    width: 20px;
-    height: 20px;
+    width: 20px;height: 20px;
     background: rgba(0, 0, 0, 0.02);
     text-align: center;
     color: #666;
@@ -204,21 +203,6 @@
     font-size: 12px;
     line-height: inherit!important;
 }
-.icon.icon-loading{
-    -webkit-animation: moveCircleLoopRight 1.4s infinite linear;
-    animation: moveCircleLoopRight 1.4s infinite linear;
-}
-.icon.icon-loading:before{content:"\f110";}
-.icon.icon-success{background:#52c41a;color:#fff;}
-.icon.icon-success:before{content:"\f00c";}
-.icon.icon-error{background:#f5222d;color:#fff;}
-.icon.icon-error:before{content:"\f00d";}
-/* .icon.icon-info{background:#f7ba29;color:#fff;} */
-.icon.icon-warning{background:#f7ba29;color:#fff;cursor: pointer;}
-.icon.icon-warning:before{content:"\f129";}
-
-
-
 .common-footer{
 	position: fixed;
 	bottom: 0px;

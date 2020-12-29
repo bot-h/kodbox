@@ -10,9 +10,9 @@ kodReady.push(function () {
 	Events.bind("admin.leftMenu.before",function(menuList){
 		menuList.push({
 			title:LNG['webdav.meta.name'],
-			icon:"icon-hard-drive1",
+			icon:"ri-hard-drive-fill-2",
 			link:"admin/storage/webdav",
-			after:'admin/storage/backup',//after/before; 插入菜单所在位置;
+			after:'admin/storage/share',//after/before; 插入菜单所在位置;
 			sort:100,
 			pluginName:"{{pluginName}}",
 		});
@@ -22,7 +22,7 @@ kodReady.push(function () {
 		if(!G.webdavOption.allow) return;
 		menuList.push({
 			title:LNG['webdav.meta.name'],
-			icon:"icon-hard-drive1",
+			icon:"ri-hard-drive-fill-2",
 			link:"setting/user/webdav",
 			pluginName:"{{pluginName}}",
 			sort:100,
