@@ -39,6 +39,7 @@ class explorerList extends Controller{
 		$this->dataParseHidden($data);
 		$this->pathIconParse($data);
 		$data = Action('explorer.listGroup')->groupChildAppend($data);
+		$data = Action('explorer.fav')->favAppend($data);
 		if($thePath) return $data;
 		show_json($data);
 	}
@@ -355,14 +356,15 @@ class explorerList extends Controller{
 			'driver'	=>	array('name'=>LNG('common.mount').' (admin)','open'=>false),
 		);
 		if(!$this->pathEnable('fileType')){unset($list['fileType']);}
-		if(!$this->pathEnable('fileTag')){unset($list['fileTag']);}
 		if(!$this->pathEnable('driver')){unset($list['driver']);}
+		// if(!$this->pathEnable('fileTag')){unset($list['fileTag']);}
+		
 		
 		$result = array();		
 		foreach ($list as $type => $item) {
 			$block = array(
 				"name"		=> $item['name'],
-				"path"		=> '{block:'.$type.'}',
+				"path"		=> '{block:'.$type.'}/',
 				"open"		=> $item['open'],
 				"isParent"	=> true,
 				"children"	=> $this->blockChildren($type),
@@ -383,7 +385,7 @@ class explorerList extends Controller{
 			case 'files': 		$result = $this->blockFiles();break;
 			case 'tools': 		$result = $this->blockTools();break;
 			case 'fileType': 	$result = $this->blockFileType();break;
-			case 'fileTag': 	$result = $this->blockTags();break;
+			case 'fileTag': 	$result = Action('explorer.tag')->tagList();break;
 			case 'driver': 		$result = Action("explorer.listDriver")->get();break;
 		}
 		return $result;
@@ -446,7 +448,6 @@ class explorerList extends Controller{
 		
 		if(!$this->pathEnable('my')){unset($list['my']);}
 		if(!$this->pathEnable('myGroup')){unset($list['myGroup']);}
-		// if(!$this->pathEnable('rootGroup')){unset($list['rootGroup']);}
 		return array_values($list);
 	}
 	
@@ -485,29 +486,12 @@ class explorerList extends Controller{
 	 */
 	private function blockTools(){
 		$list = array(
-			'recentDoc' => array("name" => LNG('explorer.toolbar.recentDoc'), "path"=> KodIO::KOD_USER_RECENT),
-			'myShare' 	=> array("name" => LNG('explorer.toolbar.myShare'), "path"=> KodIO::KOD_USER_SHARE),
-			'shareToMe' => array("name" => LNG('explorer.toolbar.shareToMe'), "path" => KodIO::KOD_USER_SHARE_TO_ME),
-			'recycle' 	=> array("name"=> LNG('explorer.toolbar.recycle'), "path"=> KodIO::KOD_USER_RECYCLE),
+			'recentDoc' => array("name" => LNG('explorer.toolbar.recentDoc'), "path"=> KodIO::KOD_USER_RECENT.'/'),
+			'myShare' 	=> array("name" => LNG('explorer.toolbar.myShare'), "path"=> KodIO::KOD_USER_SHARE.'/'),
+			'shareToMe' => array("name" => LNG('explorer.toolbar.shareToMe'), "path" => KodIO::KOD_USER_SHARE_TO_ME.'/'),
+			'recycle' 	=> array("name"=> LNG('explorer.toolbar.recycle'), "path"=> KodIO::KOD_USER_RECYCLE.'/'),
 		);
 		if(!$this->pathEnable('recentDoc')){unset($list['recentDoc']);}
 		return array_values($list);
-	}
-	
-	/**
-	 * 用户文件标签列表
-	 */
-	private function blockTags(){
-		$dataList = Model("UserTag")->listData();
-		$list = array();
-		foreach ($dataList as $item) {
-			$style = $item['style']? $tag['style'] : 'label-grey-normal';
-			$list[] = array(
-				"name"	=> $item['name'],
-				"path"	=> KodIO::makeFileTagPath($item['id']),
-				"icon"	=> 'tag-label label ' . $style,
-			);
-		}
-		return $list;
 	}
 }

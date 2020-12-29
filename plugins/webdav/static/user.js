@@ -16,11 +16,12 @@ ClassBase.define({
 			},
 			"help":{
 				"display":"<b>"+LNG['webdav.help.title']+"</b>","value":
-				"<div class='info-alert info-alert-green p-10 align-left can-select can-right-menu'>\
-				<h6><i class='icon-windows font-icon'></i>"+LNG['webdav.help.windows']+"\
-				<p class='pl-20'>"+LNG['webdav.help.windowsTips']+";<a href='"+pluginApi+"' target='_blank' class='btn btn-sm btn-default' style='border-radius:3px;'>"+LNG['common.download']+"</a></p></h6><hr/>\
-				<h6><i class='icon-apple font-icon'></i>"+LNG['webdav.help.mac']+"</h6>\
-				<h6><i class='icon-linux font-icon'></i>"+LNG['webdav.help.others']+"</h6>\
+				"<div class='info-alert info-alert-green align-left can-select can-right-menu p-10 pl-30'>\
+				<h6><i class='icon-windows font-icon ml--25 mr-5'></i>"+LNG['webdav.help.windows']+".\
+				<p class='info-alert info-alert-green align-left mt-10'>"+LNG['webdav.help.windowsTips']+
+				";  <a href='"+pluginApi+"' target='_blank' class='btn btn-sm btn-default' style='border-radius:3px;'>"+LNG['common.download']+"</a></p></h6><hr/>\
+				<h6><i class='icon-apple font-icon ml--25 mr-5'></i>"+LNG['webdav.help.mac']+"</h6>\
+				<h6><i class='icon-linux font-icon ml--25 mr-5'></i>"+LNG['webdav.help.others']+"</h6>\
 				</div>"
 			},
 			

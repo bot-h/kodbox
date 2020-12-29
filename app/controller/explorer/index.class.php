@@ -47,15 +47,14 @@ class explorerIndex extends Controller{
 	public function desktopApp(){
 		$desktopApps = include(DATA_PATH.'system/desktop_app.php');
 		$desktopApps['myComputer']['value'] = MY_HOME;
-		if(!$GLOBALS['isRoot']){
-			$result = array();
-			foreach ($desktopApps as $key => $item) {
-				if($item['rootNeed']) continue;
-				$result[$key] = $item;
+		foreach ($desktopApps as $key => &$item) {
+			if($item['menuType'] == 'menu-default-open'){
+				$item['menuType'] = 'menu-default';
 			}
-			$desktopApps = $result;
+			if(!$GLOBALS['isRoot'] && $item['rootNeed']){
+				unset($desktopApps[$key]);
+			}
 		}
-		
 		show_json($desktopApps);
 	}
 

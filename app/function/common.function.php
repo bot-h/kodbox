@@ -640,8 +640,8 @@ function array_tree($array, $id, $idKey = 'id', $pidKey = 'parentid'){
  * @param string $pid
  * @return void
  */
-function array_sub_tree($rows, $pid = 'parentid') {
-	$rows = array_column ( $rows, null, 'id' );
+function array_sub_tree($rows, $pid = 'parentid', $id = 'id') {
+	$rows = array_column ( $rows, null, $id );
 	foreach ( $rows as $key => $val ) {
 		if ( $val[$pid] ) {
 			if ( isset ( $rows[$val[$pid]] )) {
@@ -953,10 +953,6 @@ function show_json($data=false,$code = true,$info=''){
 	}
 	// 有值且为true则返回，清空输出并返回数据结果
 	if( isset($GLOBALS['SHOW_JSON_NOT_EXIT']) && $GLOBALS['SHOW_JSON_NOT_EXIT'] == 1 ){
-		// ob_get_clean();// 清空之前输出,保留最后一个;
-		// echo json_encode_force($result);
-		// return $result;
-		
 		// 保留第一个show_json调用输出;ob_get_clean 后该次置空; 
 		if(!ob_get_length()){
 			echo json_encode_force($result);
@@ -979,7 +975,7 @@ function show_json($data=false,$code = true,$info=''){
 		$result = $temp;
 	}
 	$json = json_encode_force($result);
-	if(isset($_GET['callback'])){
+	if( isset($_GET['callback']) && $GLOBALS['config']['jsonpAllow'] ){
 		if(!preg_match("/^[0-9a-zA-Z_.]+$/",$_GET['callback'])){
 			die("calllback error!");
 		}
@@ -1343,14 +1339,4 @@ function check_lang($word){
 		$language = 'en';
 	}
 	return $language;
-}
-// 手机、邮箱验证
-function check_input($type, $input){
-	if($type == 'email'){
-		return preg_match("/^([a-zA-Z0-9_-])+@([a-zA-Z0-9_-])+(\.[a-zA-Z0-9_-])+/", $input);
-	}
-	if($type == 'phone'){
-		return preg_match("/^1[345678]{1}\d{9}$/", $input); 
-	}
-	return false;
 }

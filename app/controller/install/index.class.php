@@ -606,5 +606,4 @@ class installIndex extends Controller {
             show_json($res['data'], false);
         }
     }
-
 }

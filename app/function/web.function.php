@@ -57,6 +57,9 @@ function get_url_scheme($url){
 	$res = parse_url($url);
 	return $res['scheme'];
 }
+function is_domain($url){
+	return !filter_var(get_url_domain($url), FILTER_VALIDATE_IP);
+}
 
 function http_type(){
 	if( (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ||
@@ -493,7 +496,7 @@ function curl_get_contents($url){
 	return $data['data'];
 }
 
-function get_headers_curl($url,$timeout=30,$depth=0,&$headers=array()){
+function get_headers_curl($url,$timeout=10,$depth=0,&$headers=array()){
 	if(!function_exists('curl_init')){
 		return false;
 	}
@@ -502,6 +505,10 @@ function get_headers_curl($url,$timeout=30,$depth=0,&$headers=array()){
 	curl_setopt($ch, CURLOPT_URL,$url);
 	curl_setopt($ch, CURLOPT_HEADER,true); 
 	curl_setopt($ch, CURLOPT_NOBODY,true); 
+    curl_setopt($ch, CURLOPT_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS);
+	curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+	curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+	
 	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true); 
 	curl_setopt($ch, CURLOPT_TIMEOUT,$timeout);
 	curl_setopt($ch, CURLOPT_REFERER,get_url_link($url));
@@ -569,6 +576,9 @@ function url_header($url){
 	}else{
 		$header = @get_headers($url,true);
 	}
+	foreach ($header as $key => $value) {
+		$header[strtolower($key)] = $value;
+	}
 	if (!$header) return false; 
 
 	//加入小写header值;兼容各种不统一的情况
@@ -590,25 +600,40 @@ function url_header($url){
 			}
 		}
 	}
+	
 	$name 	= $checkArr['content-disposition'];
 	$length = $checkArr['content-length'];
 	$fileUrl= $checkArr['location'];
 	if($name){
-		preg_match('/filename\s*=\s*"*(.*)"*?/',$name,$match);
-		if(count($match) == 2){
-			$name = $match[1];
-		}else{
-			$name = '';
+		$disposition = $name;
+		$name = '';
+		$checkReg = array( //前后优先级依次降低;
+			'/filename\s*\*\s*=.*\'\'(.*)/i',
+			'/filename\s*=\s*"(.*)"/i',
+			'/filename\s*=\s*(.*);/i'
+		);
+		foreach ($checkReg as $reg){
+			preg_match($reg,$disposition,$match);
+			if(!$name && is_array($match) && count($match) == 2 && $match[1]){
+				$name = $match[1];
+			}
 		}
+	}
+	if(isset($header['x-outfilename']) && $header['x-outfilename']){
+		$name = $header['x-outfilename'];
 	}
 	if(!$name){
 		$name = get_path_this($fileUrl);
-		if (strstr($name,'=')) $name = substr($name,strrpos($name,'=')+1);
-		if (!$name) $name = 'file.data';
+		if (strstr($name,'?')){
+			$name = substr($name,0,strrpos($name,'?'));
+		}
+		if(!$name) $name = data("mdHi");
+		if(!strstr($name,'.')){ //没有扩展名,自动追加;
+			$ext  = get_file_ext_by_mime($header['content-type']);
+			$name .= '.'.$ext;
+		}
 	}
-	if(isset($header['x-outfilename'])){
-		$name = $header['x-outfilename'];
-	}
+
 	$name = str_replace(array('/','\\'),'-',rawurldecode($name));//safe;
 	$supportRange = isset($header["accept-ranges"])?true:false;
 	if(!request_url_safe($fileUrl)){
@@ -698,13 +723,8 @@ function mb_parse_url($url, $component = -1) {
 	return $components;
 }
 
-function stripslashes_deep($value){
-	if(is_array($value)){
-		$value = array_map('stripslashes_deep', $value);
-	}else{
-		$value = isset($value) ? rawurldecode(stripslashes($value)) : null;
-	}
-	return $value; 
+function stripslashes_deep($value,$decode=true){
+	return is_array($value) ?array_map('stripslashes_deep',$value) :stripslashes($value);
 }
 
 function parse_url_route(){
@@ -736,14 +756,21 @@ function parse_url_route(){
 function parse_incoming(){
 	parse_url_route();
 	global $_GET, $_POST,$_COOKIE;
-
-	$_COOKIE = stripslashes_deep($_COOKIE);
-	$_GET	 = stripslashes_deep($_GET);
-	$_POST	 = stripslashes_deep($_POST);
+	if (get_magic_quotes_gpc()) {
+		$_COOKIE = stripslashes_deep($_COOKIE);
+		$_GET	 = stripslashes_deep($_GET);
+		$_POST	 = stripslashes_deep($_POST);
+	}	
 	$return = array();
 	$return = array_merge($_GET,$_POST);
-
 	$remote = array_get_index($return,0);
+	
+	//路由支持以参数形式传入;兼容没有value的GET参数key被忽略掉的情况;UC手机浏览器;
+	if(isset($return['API_ROUTE'])){
+		$remote = array($return['API_ROUTE'],'');
+		unset($return['API_ROUTE']);
+	}
+	
 	$router = trim($remote[0],'/');
 	preg_match_all('/[0-9a-zA-Z\/_]*/',$router,$arr);
     $router = join('',$arr[0]);
@@ -760,6 +787,7 @@ function parse_incoming(){
 	
 	$return['URLrouter'] = $router;
 	$return['URLremote'] = $remote;
+	// pr($_GET,$_POST,$_COOKIE,$return);exit;
 	return $return;
 } 
 
@@ -1047,10 +1075,51 @@ function mime_support($mime){
 	}
 	return false;
 }
+function get_file_ext_by_mime($contentType){
+	$mimetypes = mime_array();
+	$contentType = trim(strtolower($contentType));
+	foreach ($mimetypes as $ext => $out){
+		if($contentType == $out){
+			return $ext;
+		}
+	}
+	return 'txt';
+}
 
 //根据扩展名获取mime
 function get_file_mime($ext){
-	$mimetypes = array(
+	$mimetypes = mime_array();
+	//代码 或文本浏览器输出
+	$text = array('oexe','inc','inf','csv','log','asc','tsv');
+	$code = array("abap","abc","as","ada","adb","htgroups","htpasswd","conf","htaccess","htgroups",
+				"htpasswd","asciidoc","asm","ahk","bat","cmd","c9search_results","cpp","c","cc","cxx","h","hh","hpp",
+				"cirru","cr","clj","cljs","CBL","COB","coffee","cf","cson","Cakefile","cfm","cs","css","curly","d",
+				"di","dart","diff","patch","Dockerfile","dot","dummy","dummy","e","ejs","ex","exs","elm","erl",
+				"hrl","frt","fs","ldr","ftl","gcode","feature",".gitignore","glsl","frag","vert","go","groovy",
+				"haml","hbs","handlebars","tpl","mustache","hs","hx","html","htm","xhtml","erb","rhtml","ini",
+				"cfg","prefs","io","jack","jade","java","js","jsm","json","jq","jsp","jsx","jl","tex","latex",
+				"ltx","bib","lean","hlean","less","liquid","lisp","ls","logic","lql","lsl","lua","lp","lucene",
+				"Makefile","GNUmakefile","makefile","OCamlMakefile","make","md","markdown","mask","matlab",
+				"mel","mc","mush","mysql","nc","nix","m","mm","ml","mli","pas","p","pl","pm","pgsql","php","phtml",
+				"ps1","praat","praatscript","psc","proc","plg","prolog","properties","proto","py","r","Rd",
+				"Rhtml","rb","ru","gemspec","rake","Guardfile","Rakefile","Gemfile","rs","sass","scad","scala",
+				"scm","rkt","scss","sh","bash",".bashrc","sjs","smarty","tpl","snippets","soy","space","sql",
+				"styl","stylus","svg","tcl","tex","txt","textile","toml","twig","ts","typescript","str","vala",
+				"vbs","vb","vm","v","vh","sv","svh","vhd","vhdl","xml","rdf","rss","log",
+				"wsdl","xslt","atom","mathml","mml","xul","xbl","xaml","xq","yaml","yml","htm",
+				"xib","storyboard","plist","csproj");
+	if (array_key_exists($ext,$mimetypes)){
+		return $mimetypes[$ext];
+	}else{
+		if(in_array($ext,$text) || in_array($ext,$code)){
+			return "text/plain";
+		}
+		return 'application/octet-stream';
+	}
+}
+
+function mime_array(){
+	return array(
 		"323" => "text/h323",
 		"3gp" => "video/3gpp",
 		"acx" => "application/internet-property-stream",
@@ -1119,9 +1188,9 @@ function get_file_mime($ext){
 		"ins" => "application/x-internet-signup",
 		"isp" => "application/x-internet-signup",
 		"jfif" => "image/pipeg",
-		"jpe" => "image/jpeg",
-		"jpeg" => "image/jpeg",
 		"jpg" => "image/jpeg",
+		"jpeg" => "image/jpeg",
+		"jpe" => "image/jpeg",
 		"js" => "application/javascript",
 		"json" => "application/json",
 		"latex" => "application/x-latex",
@@ -1261,32 +1330,4 @@ function get_file_mime($ext){
 		"z" => "application/x-compress",
 		"zip" => "application/zip"
 	);
-	
-	//代码 或文本浏览器输出
-	$text = array('oexe','inc','inf','csv','log','asc','tsv');
-	$code = array("abap","abc","as","ada","adb","htgroups","htpasswd","conf","htaccess","htgroups",
-				"htpasswd","asciidoc","asm","ahk","bat","cmd","c9search_results","cpp","c","cc","cxx","h","hh","hpp",
-				"cirru","cr","clj","cljs","CBL","COB","coffee","cf","cson","Cakefile","cfm","cs","css","curly","d",
-				"di","dart","diff","patch","Dockerfile","dot","dummy","dummy","e","ejs","ex","exs","elm","erl",
-				"hrl","frt","fs","ldr","ftl","gcode","feature",".gitignore","glsl","frag","vert","go","groovy",
-				"haml","hbs","handlebars","tpl","mustache","hs","hx","html","htm","xhtml","erb","rhtml","ini",
-				"cfg","prefs","io","jack","jade","java","js","jsm","json","jq","jsp","jsx","jl","tex","latex",
-				"ltx","bib","lean","hlean","less","liquid","lisp","ls","logic","lql","lsl","lua","lp","lucene",
-				"Makefile","GNUmakefile","makefile","OCamlMakefile","make","md","markdown","mask","matlab",
-				"mel","mc","mush","mysql","nc","nix","m","mm","ml","mli","pas","p","pl","pm","pgsql","php","phtml",
-				"ps1","praat","praatscript","psc","proc","plg","prolog","properties","proto","py","r","Rd",
-				"Rhtml","rb","ru","gemspec","rake","Guardfile","Rakefile","Gemfile","rs","sass","scad","scala",
-				"scm","rkt","scss","sh","bash",".bashrc","sjs","smarty","tpl","snippets","soy","space","sql",
-				"styl","stylus","svg","tcl","tex","txt","textile","toml","twig","ts","typescript","str","vala",
-				"vbs","vb","vm","v","vh","sv","svh","vhd","vhdl","xml","rdf","rss","log",
-				"wsdl","xslt","atom","mathml","mml","xul","xbl","xaml","xq","yaml","yml","htm",
-				"xib","storyboard","plist","csproj");
-	if (array_key_exists($ext,$mimetypes)){
-		return $mimetypes[$ext];
-	}else{
-		if(in_array($ext,$text) || in_array($ext,$code)){
-			return "text/plain";
-		}
-		return 'application/octet-stream';
-	}
 }

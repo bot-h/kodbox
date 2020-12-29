@@ -16,8 +16,10 @@ return array(
 	'webdav.tips.auth'			=> "<b>读写编辑等权限:</b> 读写等权限完全同于web端; 由于协议没有报错机制,操作不成功基本等同于没有权限",
 	'webdav.tips.uploadUser'	=> "<b>上传下载限制:</b> 支持上传最大文件取决于服务器上传限制及超时时间; 具体咨询管理员进行服务器上传相关配置.",
 	'webdav.tips.use'			=> "如何使用: 开启WebDAV服务后,进入个人中心进行查看(修改配置后需要刷新页面生效);",
+	'webdav.tips.use3thAccount'	=> "如启用了钉钉或企业微信，需设置密码后(能正常使用账号密码登录)方能使用webdav。",
 	
 	'webdav.help.title'			=> "如何使用",
+	'webdav.help.connect'		=> "立即连接使用",
 	'webdav.help.windows'		=> "<b>Window:</b> 右键桌面[我的电脑/此电脑] —— 映射网络驱动器 —— 粘贴上述webdav地址,点击完成——输入账号密码即可",
 	'webdav.help.mac'			=> "<b>Mac:</b>  右键finder —— 连接服务器 —— 粘贴上述webdav地址,点击连接 —— 输入账号密码即可",
 	'webdav.help.others'		=> "<b>其他客户端及系统</b>: 明确地址为上述webdav地址,账号密码为自己登陆账号即可，基本流程类似",

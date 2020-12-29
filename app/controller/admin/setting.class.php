@@ -87,7 +87,7 @@ class adminSetting extends Controller {
 	/**
 	 * 动态添加菜单;
 	 */
-	public function addMenu($options,$menu){
+	public function addMenu($options,$menu=array()){
 		$menus = &$options['system']['options']['menu'];
 		$menusKeys = array_to_keyvalue($menus,'name');
 		if( isset($menusKeys[$menu['name']]) ) return $options;

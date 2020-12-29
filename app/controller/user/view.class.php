@@ -56,6 +56,12 @@ class userView extends Controller{
 			$options['kod']['BASIC_PATH'] = BASIC_PATH;
 		}
 		
+		//为https时自适应为https; 兼容https无法请求http的情况;
+		if(strstr(APP_HOST,'https://')){
+			$api = $options['system']['settings']['kodApiServer'];
+			$options['system']['settings']['kodApiServer'] = str_replace('http://','https://',$api);
+		}
+		
 		$optionsGet = Hook::filter('user.view.options.before',$options);
 		$options 	= is_array($optionsGet) ? $optionsGet : $options;
 		$optionsGet = Hook::filter('user.view.options.after',$options);

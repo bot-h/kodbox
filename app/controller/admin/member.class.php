@@ -85,6 +85,9 @@ class adminMember extends Controller{
 			"sex" 		=> array("check"=>"require","default"=>""),//0女1男
 			"status" 	=> array("default"=>1),
 		));
+		if( !ActionCall('user.check.password',$data['password']) ){
+			return ActionCall('user.check.passwordTips');
+		}
 		// 1.添加用户
 		$res = $userID = $this->model->userAdd($data);
 		if($res <= 0) return show_json($this->model->errorLang($res),false);
@@ -160,9 +163,7 @@ class adminMember extends Controller{
 	 */
 	public function edit() {
 		$data = Input::getArray(array(
-			// "userID" 	=> array("check"=>"bigger",'param'=>1),
-			"userID" 	=> array("check"=>"int"),	// userID=1可以编辑
-			
+			"userID" 	=> array("check"=>"int"),	// userID=1可以编辑			
 			"name" 		=> array("check"=>"require","default"=>null),
 			"sizeMax" 	=> array("check"=>"float",	"default"=>null),
 			"roleID"	=> array("check"=>"int",	"default"=>null),
@@ -176,7 +177,11 @@ class adminMember extends Controller{
 			
 			"status" 	=> array("check"=>"require","default"=>null),//0-未启用 1-启用
 		));
-
+		if( $data['password'] && 
+			!ActionCall('user.check.password',$data['password']) ){
+			return ActionCall('user.check.passwordTips');
+		}
+		
 		$res = $this->model->userEdit($data['userID'],$data);
 		$groupInfo = json_decode($this->in['groupInfo'],true);
 		if($res && is_array($groupInfo)){
@@ -240,7 +245,7 @@ class adminMember extends Controller{
 
 			$file = $res['info'];
 			$data = $this->getImport($file);
-			del_dir(get_path_father($file));
+			del_file($file);
 			if(empty($data['list'])) show_json(LNG('admin.member.uploadInvalid'), false);
 
 			$filename = get_path_this($file);
@@ -278,9 +283,8 @@ class adminMember extends Controller{
 	 * @return void
 	 */
 	private function getImport($file){
-		// 1.读取csv内容
 		if (!$handle = fopen($file, 'r')) {
-			del_dir(get_path_father($file));
+			del_file($file);
 			show_json('read file error.', false);
 		}
         $dataList = array();
@@ -308,7 +312,7 @@ class adminMember extends Controller{
                     case 'phone':
                     case 'email':
                         // 检测手机号、邮箱
-                        if(!check_input($key, $val)) $val = '';
+						if(!Input::check($val, $key)) $val = '';
                         break;
                     default: break;
                 }
@@ -325,6 +329,4 @@ class adminMember extends Controller{
 			'valid' => $valid
 		);
 	}
-
-
 }

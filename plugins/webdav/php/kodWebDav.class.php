@@ -6,6 +6,7 @@
 class kodWebDav extends HttpDavServer {
 	public function __construct($DAV_PRE) {
 		$this->plugin = Action('webdavPlugin');
+		//pr($_SERVER);exit;
 		$this->checkUser();
 		$this->initPath($DAV_PRE);
 	}
@@ -15,7 +16,6 @@ class kodWebDav extends HttpDavServer {
 		if(!method_exists($this,$method)){
 			return HttpAuth::error();
 		}
-		
 		$result = $this->$method();
 		if(!$result) return;//文件下载;
 		self::response($result);
@@ -23,18 +23,21 @@ class kodWebDav extends HttpDavServer {
 
 	/**
 	 * 用户登陆校验;权限判断;
+	 * 性能优化: 通过cookie处理为已登录; (避免ad域用户或用户集成每次进行登陆验证;)
 	 */
 	public function checkUser(){
-		$user = HttpAuth::get();
-		$find = Model("User")->userLoginCheck($user['user'],$user['pass']);
-		if ( !is_array($find) ){
-			return HttpAuth::error();
-		}
-		ActionCall('user.index.loginSuccess',$find);
+		$userInfo = Session::get("kodUser");
+	    if(!$userInfo || !is_array($userInfo)){
+    	    $user = HttpAuth::get();
+    		$find = ActionCall('user.index.userInfo', $user['user'],$user['pass']);
+    		if ( !is_array($find) || !isset($find['userID']) ){
+    			return HttpAuth::error();
+    		}
+    		ActionCall('user.index.loginSuccess',$find);
+	    }
 		if(!$this->plugin->authCheck()){
 			self::response(array('code'=>404,'body'=>"<error>您没有此权限!</error>"));exit;
 		}
-		
 	}
 	public function parsePath($path){
 		$options = $this->plugin->getConfig();

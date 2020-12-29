@@ -14,9 +14,12 @@ class explorerEditor extends Controller{
 	public function fileGet(){
 		$data = Input::getArray(array(
 			'path'		=> array('check'=>'require'),
+			'base64'	=> array('default'=>''),
 			'charset'	=> array('check'=>'require','default'=>''),
 		));
-		$this->urlFileGet($data);
+		if(request_url_safe($data['path'])){
+			return $this->urlFileGet($data['path']);
+		}
 		$pathInfo = IO::info($data['path']);
 		if(!$pathInfo) return show_json(LNG('common.pathNotExists'),false);
 
@@ -30,14 +33,17 @@ class explorerEditor extends Controller{
 			function_exists("mb_convert_encoding") ){
 			$content = @mb_convert_encoding($content,'utf-8',$charset);
 		}
+		// $data['base64'] = '1';//
+		if($data['base64']=='1'){
+			$content = strrev(base64_encode($content));
+		}
+		$pathInfo['base64'] 	= $data['base64'];
 		$pathInfo['content'] 	= $content;
 		$pathInfo['charset'] 	= $charset;
 		show_json($pathInfo);
 	}
 
-	private function urlFileGet($data){
-		$path = $data['path'];
-		if(!request_url_safe($path)) return;
+	private function urlFileGet($path){
 		$urlInfo = parse_url_query($path);
 		$displayName = rawurldecode($urlInfo['name']);
 		$fileContents = file_get_contents($path);
@@ -46,10 +52,8 @@ class explorerEditor extends Controller{
 		}else{
 			$charset = get_charset($fileContents);
 		}
-		if ($charset !='' &&
-			$charset !='utf-8' &&
-			function_exists("mb_convert_encoding")
-			){
+		if ($charset !='' && $charset !='utf-8' && 
+			function_exists("mb_convert_encoding")){
 			$fileContents = @mb_convert_encoding($fileContents,'utf-8',$charset);
 		}
 		$data = array(
@@ -58,8 +62,12 @@ class explorerEditor extends Controller{
 			'path'			=> '',
 			'pathDisplay'	=> "[" . trim($displayName, '/') . "]",
 			'charset'		=> $charset,
+			'base64'		=> $this->in['base64'] == '1' ?'1':'0',// 部分防火墙编辑文件误判问题处理
 			'content'		=> $fileContents
 		);
+		if($data['base64']=='1'){
+			$data['content'] = strrev(base64_encode($data['content']));
+		}
 		show_json($data);
 	}
 	
@@ -77,10 +85,8 @@ class explorerEditor extends Controller{
 		//支持二进制文件读写操作（base64方式）
 		$content = $data['content'];
 		if($data['base64'] == '1'){
-			$content = strrev($content); //避免防火墙拦截部分关键字内容
-			$content = base64_decode($content);
+			$content = base64_decode(strrev($content));//避免防火墙拦截部分关键字内容
 		}
-
 		$charset 	 = strtolower($data['charset']);
 		$charsetSave = strtolower($data['charsetSave']);
 		$charset  	 = $charsetSave ? $charsetSave : $charset;
