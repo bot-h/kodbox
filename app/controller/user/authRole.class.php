@@ -15,10 +15,11 @@ class userAuthRole extends Controller {
 		parent::__construct();
 	}
 	public function authCanDownload(){
-		return $this->authCan('explorer.download') && $this->authCan('explorer.view');
+		return $this->authCan('explorer.download');
 	}
 	public function isRoot(){return !!$GLOBALS['isRoot'];} 
 	public function authCanSearch(){return $this->authCan('explorer.search');}
+	public function authCanRead(){return $this->authCan('explorer.view');}
 	public function authCanEdit(){return $this->authCan('explorer.edit');}
 	public function authCan($action){
 		if($this->isRoot()) return true;

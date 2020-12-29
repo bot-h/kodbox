@@ -31,7 +31,7 @@ $config['settings'] = array(
 		'ignoreFileSize'	=> 0			// 允许单个文件上传最大值,0则不限制; 单位GB;
 	),
 	
-	'staticPath'		=> "./static/",	//静态文件目录,可以配置到cdn;
+	'staticPath'		=> APP_HOST."static/",	//静态文件目录,可以配置到cdn;
 	'kodApiServer'		=> "https://api.kodcloud.com/?", //QQ微信登陆/邮件发送/插件-列表等
 );
 
@@ -52,7 +52,7 @@ $config['cache'] = array(
 	'sessionType'	=> 'file',	//缓存方式 database/file/redis/memcached
 	'sessionTime'	=> 3600*4,	//session失效时间 
     'cacheType'		=> 'file',	//缓存方式 database/file/redis/memcached
-	'lockTimeout'	=> 5,		//并发锁获取超时时间
+	'lockTimeout'	=> 5,		//并发锁获取超时时间 5s;
 	'cacheTime'		=> 3600*5,	//缓存默认时间;
 	    
     'file'	=> array('path' => TEMP_PATH.'_cache/'),
@@ -119,7 +119,7 @@ $config['settings']['appType'] = array(
 
 $config['defaultPlugins'] = array(
 	'adminer','DPlayer','imageExif','jPlayer','officeLive','photoSwipe','picasa','pdfjs',
-	'simpleClock','toolsCommon','VLCPlayer','webodf','yzOffice',
+	'simpleClock','toolsCommon','VLCPlayer','webodf','yzOffice','webdav',
 );
 
 //初始化系统配置
@@ -152,6 +152,7 @@ $config['settingSystemDefault'] = array(
 	'csrfProtect'		=> 0, 		 	// 开启csrf保护
 	'currentVersion'	=> KOD_VERSION, // 当前版本
 	'orderSort'         => 'desc',      // sort字段排序方式;默认从大到小
+	'fileEncryption'	=> 'keepName',	// all-全加密;keepExt-加密文件名保留扩展名;keepName-不加密;
 
 	'wallpageDesktop'	=> "1,2,3,4,5,6,7,8,9,10,11,12,13",
 	'wallpageLogin'		=> "2,3,6,8,9,11,12",
@@ -192,21 +193,22 @@ $config['settingDefault'] = array(
 	"fileIconSizeDesktop"=> '80',		// 桌面图标大小
 	'resizeConfig'		=> 
 		'{"filename":250,"filetype":80,"filesize":80,"filetime":215,"editorTreeWidth":200,"explorerTreeWidth":200}',
-	'imageThumb'		=> 1,
-	'fileSelect'		=> 1,
+	'imageThumb'		=> '1',
+	'fileSelect'		=> '1',
+	'displayHideFile'	=> '0',
 );
 $config['editorDefault'] = array(
 	'fontSize'		=> '14px',
 	'theme'			=> 'tomorrow',
-	'autoWrap'		=> 1,		//自适应宽度换行
-	'autoComplete'	=> 1,
-	'functionList' 	=> 1,
-	"tabSize"		=> 4,
-	"softTab"		=> 1,
-	"displayChar"	=> 0,		//是否显示特殊字符
+	'autoWrap'		=> '1',		//自适应宽度换行
+	'autoComplete'	=> '1',
+	'functionList' 	=> '1',
+	"tabSize"		=> '4',
+	"softTab"		=> '1',
+	"displayChar"	=> '0',		//是否显示特殊字符
 	"fontFamily"	=> "Menlo",	//字体
 	"keyboardType"	=> "ace",	//ace vim emacs
-	"autoSave"		=> 0,		//自动保存
+	"autoSave"		=> '0',		//自动保存
 );
 
 // 文档类型筛选；分页
@@ -325,7 +327,7 @@ $config['authRoleAction']= array(
 		'explorer.editor'=>'fileGet',
 		'explorer.fileView'=>'index,open'
 	),
-	'explorer.download'		=> array('explorer.index'=>'zipDownload,fileDownloadRemove'),
+	'explorer.download'		=> array('explorer.index'=>'fileDownload,zipDownload,fileDownloadRemove'),
 	'explorer.share'		=> array('explorer.userShare'=>'add,edit,del'),
 	'explorer.remove'		=> array('explorer.index'=>'pathDelete,recycleDelete,recycleRestore'),
 	'explorer.edit'			=> array('explorer.index'=>'setDesc,setAuth,fileSave,pathRename,zip,unzip',

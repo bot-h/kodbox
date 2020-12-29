@@ -36,11 +36,12 @@ class adminMember extends Controller{
 	public function get() {
 		$rootGroupID = 1;
 		$data = Input::getArray(array(
-			"groupID"	=> array("check"=>"int",'default'=>0),
 			"fields"	=> array("check"=>"require",'default'=>''),
+			"status"	=> array("default"=>null)
 		));
-		$id = $data['groupID'] == 1 ? 0 : $data['groupID'];	// 根部门（id=1）获取全部用户
-		$result = $this->model->listByGroup($id, $data['fields']);
+		$id = Input::get('groupID','bigger',null,0);
+		if($id == 1) $id = 0;	// 根部门（id=1）获取全部用户
+		$result = $this->model->listByGroup($id, $data);
 		show_json($result,true);
 	}
 	
@@ -60,8 +61,9 @@ class adminMember extends Controller{
 		$data = Input::getArray(array(
 			"words" 		=> array("check"=>"require"),
 			"parentGroup"	=> array("check"=>"int",'default'=>false),
+			"status"		=> array("default"=>null)
 		));
-		$result = $this->model->listSearch($data['words'],$data['parentGroup']);
+		$result = $this->model->listSearch($data);
 		show_json($result,true);
 	}
 	

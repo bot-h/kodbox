@@ -128,7 +128,8 @@ class explorerShare extends Controller{
 		if( $share['options'] && 
 			$share['options']['downloadNumber'] && 
 			$share['options']['downloadNumber'] <= $share['numDownload'] ){
-			show_json(LNG('explorer.share.downExceedTips'),30102,$this->get(true));
+			$msg = LNG('explorer.share.downExceedTips');
+			is_ajax() ? show_json($msg,30102,$this->get(true)) : show_tips($msg);
 		}
 		//检测是否需要登录
 		$user = Session::get("kodUser");
@@ -183,7 +184,8 @@ class explorerShare extends Controller{
 			show_json(LNG('explorer.share.noUploadTips'),false);
 		}
 		if((equal_not_case(ACT,'fileOut') && $this->in['download']=='1') ||
-			equal_not_case(ACT,'zipDownload')){
+			equal_not_case(ACT,'zipDownload') || 
+			equal_not_case(ACT,'fileDownload')){
 			$this->model->where($where)->setAdd('numDownload');
 		}
 	}
@@ -232,6 +234,11 @@ class explorerShare extends Controller{
 		$isDownload = $this->in['download'] == 1;
 		IO::fileOut($path,$isDownload);
 	}
+	public function fileDownload(){
+		$this->in['download'] = 1;
+		$this->fileOut();
+	}
+	
 	public function fileUpload(){
 		$this->in['path'] = $this->parsePath($this->in['path']);
 		Action("explorer.upload")->fileUpload();

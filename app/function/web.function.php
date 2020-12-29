@@ -32,7 +32,7 @@ function get_client_ip($b_ip = true){
 	if ($pos = strpos($client_ip,',')){
 		$client_ip = substr($client_ip,$pos+1);
 	}
-	return $client_ip;
+	return trim($client_ip);
 }
 
 function get_url_link($url){
@@ -69,10 +69,6 @@ function http_type(){
 }
 
 function get_host() {
-	//兼容子目录反向代理:只能是前端js通过cookie传入到后端进行处理
-	// if(defined('GLOBAL_DEBUG') && isset($_COOKIE['HOST']) && isset($_COOKIE['APP_HOST'])){
-	// 	// return $_COOKIE['HOST'];
-	// }
 	$protocol = http_type().'://';
 	$url_host = $_SERVER['SERVER_NAME'].($_SERVER['SERVER_PORT']=='80' ? '' : ':'.$_SERVER['SERVER_PORT']);
 	$host = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : $url_host;
@@ -89,6 +85,13 @@ function this_url(){
 function webroot_path($basic_path){
 	$index = path_clear(BASIC_PATH.'index.php');
 	$uri   = path_clear($_SERVER["DOCUMENT_URI"]);
+	
+	// 兼容 index.php/explorer/list/path; 路径模式;
+	if($uri){//DOCUMENT_URI存在的情况;
+		$uriPath = substr($uri,0,strpos($uri,'/index.php'));
+		$uri = $uriPath.'/index.php';
+	}
+
 	if( substr($index,- strlen($uri) ) == $uri){
 		$path = substr($index,0,strlen($index)-strlen($uri));
 		return rtrim($path,'/').'/';
@@ -934,6 +937,13 @@ function client_is_windows(){
 		}	
 	}	
 	return $is_windows[0];
+}
+
+function is_ajax(){
+	if(isset($_SERVER["HTTP_X_REQUESTED_WITH"]) && strtolower($_SERVER["HTTP_X_REQUESTED_WITH"])=="xmlhttprequest"){
+		return true;
+	}
+	return false;
 }
 
 // 获取操作系统信息 TODO

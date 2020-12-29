@@ -407,6 +407,11 @@ class explorerIndex extends Controller{
 		show_json($list);
 	}
 
+	public function fileDownload(){
+		$this->in['download'] = 1;
+		Hook::trigger('explorer.fileDownload', $this->in['path']);
+		$this->fileOut();
+	}
 	//输出文件
 	public function fileOut(){
 		$path = $this->in['path'];
@@ -425,7 +430,6 @@ class explorerIndex extends Controller{
 				return IO::fileOutImage($path,$this->in['width']);
 			}
 		}
-		if($isDownload) Hook::trigger('explorer.fileDownload', $path);
 		$this->updateLastOpen($path);
 		IO::fileOut($path,$isDownload);
 	}

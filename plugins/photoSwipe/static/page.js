@@ -13,13 +13,13 @@ define(function(require, exports) {
 			});
 		}
 		
-		var $file    = $("[data-path="+hashEncode(filePath)+"]");
-		var $images  = $file.parent().find(".file .picture");
+		var $files 	 = $("[data-path="+hashEncode(filePath)+"]");
+		var $images  = $files.parent().find(".file .picture-show");
 		if($images.length > 0){
 			$images.each(function(i){
-				var $curFile = $(this).parents('.file');
-				var curPath  = hashDecode($curFile.attr('data-path'));
-				makeItem(curPath,$curFile.attr('data-name'),$(this).find('img'));
+				var $file = $(this).parents('.file');
+				var curPath  = hashDecode($file.attr('data-path'));
+				makeItem(curPath,$file.attr('data-name'),$(this));
 				if(curPath == filePath){
 					index = i;
 				}
@@ -44,20 +44,10 @@ define(function(require, exports) {
 			bgOpacity:0.8,
 			maxSpreadZoom:5,
 			closeOnScroll:false,
-			
 			shareEl: false,
-			// shareEl: true,
-			// shareButtons: [
-			// 	{id:'open', label:"查看原图", url:'{{raw_image_url}}', download:false},
-			// 	{id:'download', label:LNG['common.download'], url:'{{raw_image_url}}&download=1', download:true}
-			// ],
-			
-			getImageURLForShare: function( shareButtonData ) {
-				return gallery.currItem.trueImage || '';
-			},
 			showHideOpacity:false,
 			showAnimationDuration: 300,
-			hideAnimationDuration: 300,
+			hideAnimationDuration: 500,
 			fullscreenEl : true,
 			history:false,
 			preload:[1,5],
@@ -68,16 +58,24 @@ define(function(require, exports) {
 				}
 				var pageYScroll = window.pageYOffset || document.documentElement.scrollTop; 
 				var rect = $(item.$dom).get(0).getBoundingClientRect();
+				rect = {width:rect.width,height:rect.height,left:rect.left,top:rect.top};
 				
 				// 图片没有完全显示时(相册模式,高宽固定,定宽定高,超出从中间截取)
 				if(rect.width == rect.height){
-					var width  = item.$dom.attr('img-width');
-					var height = item.$dom.attr('img-height');
-					rect.height = (rect.width * height) / width; //重新计算高度; 保持比例不变;
+					var width  = parseInt(item.$dom.attr('img-width'));
+					var height = parseInt(item.$dom.attr('img-height'));
+					var boxSize = rect.width;
+					if(height > width){
+						rect.height = (rect.width * height) / width; //重新计算高度; 保持比例不变;
+						rect.top  = rect.top - (rect.height - boxSize) / 2; //图片取中间后上面偏移;
+					}else{
+						rect.width = (rect.height * width) / height; //重新计算高度; 保持比例不变;
+						rect.left  = rect.left - (rect.width - boxSize) / 2; //图片取中间后左侧偏移;
+					}
 				}
-				
+				// console.log(102,__json(rect));
 				return {
-					x:rect.left,
+					x:rect.left || 0,
 					y:rect.top + pageYScroll,
 					w:rect.width,
 					h:rect.height
@@ -104,8 +102,13 @@ define(function(require, exports) {
 				item.w = rect.w * 25;
 				item.h = rect.h * 25;
 				gallery.loadFinished = true;
-				console.log(123123,item,rect);
+				// console.log(123123,item,rect);
 			}
+		});
+		gallery.listen('close', function(){
+			setTimeout(function(){
+				$(gallery.container).find('.pswp__zoom-wrap').fadeOut(200);
+			},300);
 		});
 		gallery.init();
 	};

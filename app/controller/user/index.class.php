@@ -30,7 +30,6 @@ class userIndex extends Controller {
 	}
 	public function shutdownEvent(){
 		CacheLock::unlockRuntime();// 清空异常时退出,未解锁的加锁;
-		
 	}
 
 	private function initDB(){
@@ -172,7 +171,7 @@ class userIndex extends Controller {
 		$user = Model("User")->userLoginCheck($data['name'],$data['password']);
 		if ( !is_array($user) ) {
 			show_json(LNG('user.pwdError'),false);
-		}		
+		}
 		if(!$user['status']){
 			show_json(LNG('user.userEnabled'), ERROR_CODE_USER_INVALID);
 		}
