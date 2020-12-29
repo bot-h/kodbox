@@ -175,6 +175,9 @@ class explorerAuth extends Controller {
 		
 		//个人挂载目录；跨空间移动复制根据身份处理；
 		if( $ioType == KodIO::KOD_USER_DRIVER ) return true;
+		if( $ioType == KodIO::KOD_SHARE_LINK){
+			return Action('explorer.share')->sharePathInfo($path);
+		}
 
 		// 如果是获取列表动作，排除只有读取列表权限
 		// 虚拟目录检测;只能查看列表，不能做其他任何操作(新建重命名等)
