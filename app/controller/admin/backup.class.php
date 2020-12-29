@@ -60,5 +60,4 @@ class adminBackup extends Controller{
 		$msg = $res ? LNG('explorer.success') : LNG('explorer.error');
 		show_json($msg,!!$res);
 	}
-
 }

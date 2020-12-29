@@ -38,16 +38,15 @@ class explorerIndex extends Controller{
 			$result = IO::infoWithChildren($path);
 		}
 		if(!$result) return false;
-		if( $result['type'] == 'file' && 
-			Action('explorer.auth')->fileCanRead($path)){
+		if( $result['type'] == 'file' && Action('explorer.auth')->fileCanRead($path)){
 			$result['downloadPath'] = Action('explorer.share')->link($path);
 		}
-		$result['pathDisplay'] = $result['pathDisplay']? $result['pathDisplay']: $result['path'];
+		$result = Action('explorer.list')->pathInfoParse($result);
 		return $result;
 	}
 	
 	public function desktopApp(){
-		$desktopApps = include(DATA_PATH.'system/desktop_app.php');
+		$desktopApps = include(USER_SYSTEM.'desktop_app.php');
 		$desktopApps['myComputer']['value'] = MY_HOME;
 		foreach ($desktopApps as $key => &$item) {
 			if($item['menuType'] == 'menu-default-open'){
@@ -64,7 +63,7 @@ class explorerIndex extends Controller{
 	 * 设置文档描述;
 	 */
 	public function setDesc(){
-		$maxLength = 1000;
+		$maxLength = $GLOBALS['config']['systemOption']['fileDescLengthMax'];
 		$msg = LNG('explorer.descTooLong').'('.LNG('explorer.noMoreThan').$maxLength.')';
 		$data = Input::getArray(array(
 			'path'	=> array('check'=>'require'),
@@ -160,6 +159,10 @@ class explorerIndex extends Controller{
 		if($name != $checkName){
 		    show_json(LNG('explorer.charNoSupport').implode(',',$notAllow),false);
 		}
+		
+		if( strlen($name) > $GLOBALS['config']['systemOption']['fileNameLengthMax'] ){
+			show_json(LNG("common.lengthLimit"),false);
+		}
 		return;
 	}
 	
@@ -202,6 +205,7 @@ class explorerIndex extends Controller{
 
 	public function pathDelete(){
 		$list = json_decode($this->in['dataArr'],true);
+		$this->taskCopyCheck($list);
 		$toRecycle = Model('UserOption')->get('recycleOpen');
 		if( _get($this->in,'shiftDelete') == '1' ){
 			$toRecycle = false;
@@ -214,7 +218,7 @@ class explorerIndex extends Controller{
 				$errorMsg = LNG('explorer.desktopDelError');
 				continue;
 			}
-			$result = IO::remove($val['path'],$toRecycle);
+			$result = Action('explorer.recycleDriver')->removeCheck($val['path'],$toRecycle);
 			$result ? $success ++ : $error ++;
 		}
 		$code = $error === 0 ? true:false;
@@ -226,22 +230,31 @@ class explorerIndex extends Controller{
 	}
 	// 从回收站删除
 	public function recycleDelete(){		
-		if( _get($this->in,'all') ){
-			Model('SourceRecycle')->remove(false);
-		}else{
-			$sourceId = $this->parseSource();
-			Model('SourceRecycle')->remove($sourceId);
+		$sourceArr = false;
+		$pathArr   = false;
+		if( !_get($this->in,'all') ){
+			$sourceArr = $this->parseSource();
+			$pathArr = json_decode($this->in['dataArr'],true);
+			$pathArr = array_to_keyvalue($pathArr,'','path');
 		}
+		$this->taskCopyCheck(json_decode($this->in['dataArr'],true));
+		Model('SourceRecycle')->remove($sourceArr);
+		Action('explorer.recycleDriver')->remove($pathArr);
 		show_json(LNG('explorer.success'));
 	}
 	//回收站还原
 	public function recycleRestore(){
-		if(_get($this->in,'all')){
-			Model('SourceRecycle')->restore(false);
-		}else{
-			$sourceId = $this->parseSource();
-			Model('SourceRecycle')->restore($sourceId);
+		$sourceArr = false;
+		$pathArr   = false;
+		if( !_get($this->in,'all') ){
+			$sourceArr = $this->parseSource();
+			$pathArr = json_decode($this->in['dataArr'],true);
+			$pathArr = array_to_keyvalue($pathArr,'','path');
 		}
+		
+		$this->taskCopyCheck(json_decode($this->in['dataArr'],true));
+		Model('SourceRecycle')->restore($sourceArr);
+		Action('explorer.recycleDriver')->restore($pathArr);
 		show_json(LNG('explorer.success'));
 	}
 	private function parseSource(){
@@ -252,6 +265,7 @@ class explorerIndex extends Controller{
 		}
 		return $result;
 	}
+	
 	public function pathCopy(){
 		Session::set(array(
 			'pathCopyType'	=> 'copy',
@@ -307,6 +321,9 @@ class explorerIndex extends Controller{
 		}
 
 		$list = json_decode($list,true);
+		if($copyType == 'copy'){
+			$list = $this->copyCheckShare($list);
+		}
 		$pathTo = $this->in['path'];
 		if (count($list) == 0 || !$pathTo) {
 			show_json(LNG('explorer.clipboardNull'),false);
@@ -316,7 +333,7 @@ class explorerIndex extends Controller{
 		$error = '';
 		$repeat = Model('UserOption')->get('fileRepeat');
 		$repeat = !empty($this->in['fileRepeat']) ? $this->in['fileRepeat'] :$repeat;
-		$result = array();		
+		$result = array();
 		for ($i=0; $i < count($list); $i++) {
 			$thePath = $list[$i]['path'];
 			if ($copyType == 'copy') {
@@ -339,6 +356,31 @@ class explorerIndex extends Controller{
 		$msg= $copyType == 'copy'?LNG('explorer.pastSuccess').$error:LNG('explorer.cutePastSuccess').$error;
 		$code = $error =='' ?true:false;
 		show_json($msg,$code,$result);
+	}
+	
+	// 外链分享复制;
+	private function copyCheckShare($list){
+		for ($i=0; $i < count($list); $i++) {
+			$path = $list[$i]['path'];
+			$pathParse= KodIO::parse($path);
+			if($pathParse['type'] != KodIO::KOD_SHARE_LINK) continue;
+			
+			// 外链分享处理; 权限限制相关校验; 关闭下载--不支持转存; 转存数量限制处理;
+			$info = Action('explorer.share')->sharePathInfo($path);
+			if(!$info){
+				show_json($GLOBALS['explorer.sharePathInfo.error'], false);
+			}
+			if($info['option'] && $this->share['options']['notDownload'] == '1'){
+				show_json(LNG('explorer.share.noDownTips'), false);
+			}
+			$storeMax = $GLOBALS['settings']['storeFileNumberMax'];
+			if($info['type'] == 'folder' && $storeMax && $info['children']['fileNum'] > $storeMax){
+				show_json(LNG('explorer.upload.fileSizeDisable'), false);
+			}
+			$list[$i]['path'] = $info['path'];
+			// pr($path,$info);exit;
+		}
+		return $list;
 	}
 
 	// 文件移动; 耗时任务;

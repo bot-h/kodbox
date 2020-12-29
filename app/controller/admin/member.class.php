@@ -184,7 +184,7 @@ class adminMember extends Controller{
 		
 		$res = $this->model->userEdit($data['userID'],$data);
 		$groupInfo = json_decode($this->in['groupInfo'],true);
-		if($res && isset($this->in['groupInfo'])){ 
+		if($res > 0 && isset($this->in['groupInfo'])){ 
 			// 编辑用户,必须有至少一个默认部门; 即便是没有权限;
 			$groupInfo = is_array($groupInfo) ? $groupInfo : array();
 			$this->model->userGroupSet($data['userID'],$groupInfo,true);

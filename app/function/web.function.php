@@ -202,11 +202,19 @@ function curl_progress_start($curl){
 	$GLOBALS['curlKodLastTime'] = 0;
 	$GLOBALS['curlKodLast'] = $curl;
 	Hook::trigger('curl.progressStart',$curl);
+	think_status('curlTimeStart');
 }
 function curl_progress_end($curl){
 	$GLOBALS['curlKodLastTime'] = 0;
 	$GLOBALS['curlKodLast'] = false;
 	Hook::trigger('curl.progressEnd',$curl);
+	
+	// 网络请求记录;
+	$curlInfo = curl_getinfo($curl);
+	think_status('curlTimeEnd');
+	$runTime = '[ RunTime:'.think_status('curlTimeStart','curlTimeEnd',6).'s ]';
+	$runInfo = "sizeUp={$curlInfo['size_upload']};sizeDown={$curlInfo['download_content_length']};";//json_encode($curlInfo)
+	think_trace(" ".$curlInfo['url'].";".$runInfo.$runTime,'','CURL');
 }
 function curl_progress(){
 	$args = func_get_args();

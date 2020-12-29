@@ -10,23 +10,24 @@ class installIndex extends Controller {
     public $admin = array();
     public $setingUser; 
     public $installLock; 
-    public $fastInstallLock; 
+    public $installFastLock; 
     public $dbType;
     public $dbWasSet = 'dbWasSet';
 	public function __construct() {
         parent::__construct();
         $this->setingUser       = BASIC_PATH  . 'config/setting_user.php';
         $this->installLock      = USER_SYSTEM . 'install.lock';
-        $this->fastInstallLock  = USER_SYSTEM . 'fastinstall.lock';
-		$this->checkAuth();
+        $this->installFastLock  = USER_SYSTEM . 'fastinstall.lock';
+		$this->authCheck();
     }
 
-    public function checkAuth(){
+    public function authCheck(){
         if(MOD.'.'.ST == 'install.index'){
-            if(!ACT || !in_array(ACT, array('env', 'save'))){
+            if(!ACT || !in_array(ACT, array('env', 'save', 'auto'))){
                 show_json(LNG('common.illegalRequest'), false);
             }
-            if($this->checkInstall()) show_json(LNG('admin.install.errorRequest'), false);
+            if($this->installCheck()) show_json(LNG('admin.install.errorRequest'), false);
+            if(ACT == 'auto') $this->auto();    // 全自动安装
         }
     }
 
@@ -38,7 +39,7 @@ class installIndex extends Controller {
             define('INSTALL_PATH', './app/controller/install/');
         }
         // 判断是否需要安装
-        if($this->checkInstall()) return;
+        if($this->installCheck()) return;
         if(ACTION == 'user.view.options'){
             $options = array(
                 "kod"	=> array(
@@ -67,14 +68,12 @@ class installIndex extends Controller {
 			ActionCall(ACTION);exit;
         }
         $this->tpl = CONTROLLER_DIR . 'install/static/';
-        $this->values = array(
-            'installPath' => INSTALL_PATH, 
-            'fastInstall' => $this->fastInstall()
-        );
+        $value = array('installPath' => INSTALL_PATH);
+        $this->values = array_merge($value, $this->installFast());
         $this->display('index.html');
         exit;
     }
-    private function checkInstall(){
+    private function installCheck(){
         if(@file_exists($this->installLock) && @file_exists($this->setingUser)) {
             if($this->dbDefault(true)) return true;
         }
@@ -82,8 +81,48 @@ class installIndex extends Controller {
         return false;
     }
     // 一键安装
-    private function fastInstall(){
-        return (@file_exists($this->fastInstallLock) && @file_exists($this->setingUser)) ? 1 : 0;
+    private function installFast(){
+        $data = array('installFast' => 0, 'installAuto' => '');
+        if(!@file_exists($this->installFastLock) || !@file_exists($this->setingUser)) {
+            return $data;
+        }
+        $data['installFast'] = 1;
+        if($auto = $this->getFastAcc()){
+            $data['installFast'] = 2;
+            $data['installAuto'] = $auto;
+        }
+        return $data;
+    }
+    // 获取自动安装账号密码
+    private function getFastAcc(){
+        $file = $this->installFastLock;
+        $content = trim(file_get_contents($file));
+        if(empty($content)) return false;
+
+        $content = array_filter(explode(PHP_EOL, $content));
+        $data = array();
+        foreach($content as $line) {
+            $tmp = explode("=", trim($line));
+            if(empty($tmp[1])) continue;
+            $data[strtolower($tmp[0])] = $tmp[1];
+        }
+        if(isset($data['adm_name']) && isset($data['adm_pwd'])) {
+            return $data['adm_name'] . '|' . $data['adm_pwd'];
+        }
+        return false;
+    }
+    // 全自动安装
+    public function auto(){
+        $data = $this->installFast();
+        if($data['installFast'] != 2) return;
+
+        $data = explode('|', $data['installAuto']);
+        $this->in = array(
+            'name'      => $data[0],
+            'password'  => $data[1],
+            'action'    => 'user',
+        );
+        $this->save();
     }
 
     // 获取数据库默认配置信息
@@ -305,30 +344,10 @@ class installIndex extends Controller {
 		if (!@file_exists($dbFile)) {
 			show_json(LNG('admin.install.dbFileError'), false);
 		}
-        $sql = file_get_contents($dbFile);
-        $sqls = $this->_sqlSplite($sql);
-        foreach($sqls as $sql){
-            $res = $db->execute($sql);
-        }
-    }
-
-    private function _sqlSplite($sql){
-        $num = 0;
-        $ret = array();
-        $sql = str_replace("\r", "\n", $sql);
-        $queriesArray = explode(";\n", trim($sql));
-        unset($sql);
-        foreach($queriesArray as $query){
-            $ret[$num] = '';
-            $queries = explode("\n", trim($query));
-            $queries = array_filter($queries);
-            foreach($queries as $query){
-                $str1 = substr($query, 0, 1);
-                if($str1 != '#' && $str1 != '-') $ret[$num] .= $query;
-            }
-            $num++;
-        }
-        return $ret;
+		$sqlArr = sqlParse(file_get_contents($dbFile));
+		foreach($sqlArr as $sql){
+			$db->execute($sql);
+		}
     }
 
     /**
@@ -347,6 +366,7 @@ class installIndex extends Controller {
                 'dbPwd'     => array('aliasKey' => 'db_pwd', 'check'    => 'require', 'default' => ''),
                 'dbName'    => array('aliasKey' => 'db_name', 'check'   => 'require'),
             ));
+            $this->execPort($data);
             $dbType = in_array('mysqli', $dbList) ? 'mysqli' : 'mysql';
         }else if($dbType == 'pdo'){
             $this->dbType = $pdoType = Input::get('pdoType', 'in', null, array('sqlite', 'mysql'));
@@ -359,6 +379,7 @@ class installIndex extends Controller {
                     'pdoDbPwd'  => array('aliasKey' => 'db_pwd', 'check'    => 'require', 'default' => ''),
                     'pdoDbName' => array('aliasKey' => 'db_name', 'check'   => 'require'),
                 ));
+                $this->execPort($data);
                 $data['db_dsn'] = "mysql:host={$data['db_host']}";
             }else{
                 $data['db_dsn'] = "sqlite:" . $this->sqliteDbFile();
@@ -382,6 +403,13 @@ class installIndex extends Controller {
             'DB_FIELDS_CACHE'       => true,		// 启用字段缓存
             'DB_SQL_BUILD_CACHE'	=> false,		// sql生成build缓存
         )), CASE_UPPER);
+    }
+    private function execPort(&$data) {
+        $host = explode(':', $data['db_host']);
+        if(isset($host[1])) {
+            $data['db_host'] = $host[0];
+            $data['db_port'] = $host[1];
+        }
     }
 
     /**
@@ -425,7 +453,7 @@ class installIndex extends Controller {
             if(!Model('User')->userEdit($userID, $data)) show_json(LNG('user.bindUpdateError'), false);
             Cache::remove($this->dbWasSet);
             @touch($this->installLock);
-            del_file($this->fastInstallLock);
+            del_file($this->installFastLock);
             show_json(LNG('admin.install.updateSuccess'), true, $userID);
         }
         $this->admin = $data;
@@ -452,7 +480,7 @@ class installIndex extends Controller {
         $GLOBALS['SHOW_JSON_NOT_EXIT'] = 0;
 
         @touch($this->installLock);
-        del_file($this->fastInstallLock);
+        del_file($this->installFastLock);
         show_json(LNG('admin.install.createSuccess'), true);
     }
 
@@ -494,7 +522,7 @@ class installIndex extends Controller {
     public function initLightApp(){
         $model = Model('SystemLightApp');
 		$list = $model->clear();
-		$str = file_get_contents(DATA_PATH.'system/apps.php');
+		$str = file_get_contents(USER_SYSTEM.'apps.php');
 		$data= json_decode(substr($str, strlen('<?php exit;?>')),true);
 		
 		foreach ($data as $app) {

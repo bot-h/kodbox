@@ -29,6 +29,7 @@ class kodWebDav extends HttpDavServer {
 		$userInfo = Session::get("kodUser");
 	    if(!$userInfo || !is_array($userInfo)){
     	    $user = HttpAuth::get();
+    	    $this->plugin->log($user);
     		$find = ActionCall('user.index.userInfo', $user['user'],$user['pass']);
     		if ( !is_array($find) || !isset($find['userID']) ){
     			return HttpAuth::error();

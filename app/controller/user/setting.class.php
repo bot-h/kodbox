@@ -62,18 +62,17 @@ class userSetting extends Controller {
 		if (isset($data['msgCode'])) {
 			$this->userMsgCheck($input, $data);
 		}
-		// 昵称校验
-		if ($data['type'] == 'nickName') {
-			$this->userNickCheck($input, $data);
-		}
+		// 昵称校验——更新时校验
 		// 密码校验
 		if ($data['type'] == 'password') {
 			$input = $this->userPwdCheck($data);
 		}
 
 		// 更新用户信息
-		if (!$this->model->userEdit($userID, array($data['type'] => $input))) {
-			show_json(LNG('explorer.error'), false);
+		$res = $this->model->userEdit($userID, array($data['type'] => $input));
+		if ($res <= 0) {
+			$msg = $this->model->errorLang($res);
+			show_json(($msg ? $msg : LNG('explorer.error')), false);
 		}
 		Session::remove('checkCode');
 		Model('User')->cacheFunctionClear('getInfo',$userID);
@@ -113,22 +112,6 @@ class userSetting extends Controller {
 			'input' => $input
 		);
 		Action("user.regist")->msgCodeExec($type, $data['msgCode'], $param);
-	}
-
-	/**
-	 * 用户昵称检测
-	 * @param type $input
-	 * @param type $data
-	 * @return type
-	 */
-	private function userNickCheck($input, $data) {
-		$oldName = $this->user['nickName'];
-		if ($input == $oldName)  return;
-
-		// 新旧昵称不等,且新昵称能查询到
-		if (Model('User')->userSearch(array('nickName' => $input))) {
-			show_json(LNG('explorer.repeatError'), false);
-		}
 	}
 
 	/**

@@ -44,6 +44,53 @@ class explorerListDriver extends Controller{
 		}
 		return $list;
 	}
+	
+	// 文件列表,某个路径自己分享了,则追加分享信息;
+	public function driverAppend(&$data){
+		foreach ($data as $type =>&$list) {
+			if(!in_array($type,array('fileList','folderList'))) continue;
+			foreach ($list as $key=>$item){
+				$list[$key] = $this->parsePathIO($item);
+			}
+		}
+		$data['current'] = $this->parsePathIO($data['current']);
+	}
+		
+	public function parsePathIO($info){
+		if(substr($info['path'],0,4) != '{io:') return $info;
+		static $driverList = false;
+		if ($driverList === false) {
+			$list = Model('Storage')->driverListSystem();
+			$driverList = array_to_keyvalue($list,'id');
+		}
+		if(!$driverList) return $info;
+		
+		$parse = KodIO::parse($info['path']);
+		$storage = $driverList[$parse['id']];
+		if($storage){
+			$info['ioType'] = $storage['driver'];
+			$info['pathDisplay'] = str_replace($parse['pathBase'],$storage['name'],$info['path']);
+
+			// 根目录;
+			if( !trim($parse['param'],'/') || $info['sourceInfo']['isFav'] ){
+				if(!$info['sourceInfo']['favName']){
+					$info['name'] = $storage['name'];
+				}
+				$info['icon'] = 'io-'.strtolower($storage['driver']);
+				if(isset($storage['config']['domain'])){
+					$info['ioDomain'] = $storage['config']['domain'];
+				}
+				if(isset($storage['config']['bucket'])){
+					$info['ioBucket'] = $storage['config']['bucket'];
+				}
+				if(isset($storage['config']['basePath'])){
+					$info['ioBasePath'] = $storage['config']['basePath'];
+				}
+			}
+		}
+		// pr($storage,$parse,$info,$driverList);exit;
+		return $info;		
+	}
 
 	
 	private function driverOthers(&$list){

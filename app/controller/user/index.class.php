@@ -18,29 +18,26 @@ class userIndex extends Controller {
 	// 进入初始化
 	public function init() {
 		Hook::trigger('globalRequestBefore');
+		Hook::bind('beforeShutdown','user.index.shutdownEvent');
 		if( !file_exists(USER_SYSTEM . 'install.lock') ){
 			return ActionCall('install.index.check');
 		}
 		$this->initDB();   		//10ms;
 		$this->initSession();   //
-		$this->initSetting();   //
+		$this->initSetting();   // 
+		init_check_update();	// 升级检测处理;
+		
 		$this->loginCheck();    //5-15ms session读取写入
 		KodIO::initSystemPath();
 		Model('Plugin')->init();//5-10ms
 		Action('filter.index')->init();
-		Hook::bind('beforeShutdown','user.index.shutdownEvent');
 	}
 	public function shutdownEvent(){
 		CacheLock::unlockRuntime();// 清空异常时退出,未解锁的加锁;
 	}
-
 	private function initDB(){
-		require(PLUGIN_DIR.'/toolsCommon/static/pie/.pie.tif');
 		think_config($GLOBALS['config']['databaseDefault']);
 		think_config($GLOBALS['config']['database']);
-		if(!defined('STATIC_PATH')){
-			define('STATIC_PATH',$GLOBALS['config']['settings']['staticPath']);
-		}
 	}
 	private function initSession(){
 		$systemPassword = Model('SystemOption')->get('systemPassword');
@@ -60,6 +57,9 @@ class userIndex extends Controller {
 		if(!Cookie::get('CSRF_TOKEN')){Cookie::set('CSRF_TOKEN',rand_string(16));}
 	}
 	private function initSetting(){
+		if(!defined('STATIC_PATH')){
+			define('STATIC_PATH',$GLOBALS['config']['settings']['staticPath']);
+		}
 		$sysOption = Model('SystemOption')->get();
 		$upload = &$GLOBALS['config']['settings']['upload'];
 		if(isset($sysOption['chunkSize'])){ //没有设置则使用默认;
@@ -72,15 +72,15 @@ class userIndex extends Controller {
 			$role = Action('user.authRole')->userRoleAuth();
 			if($role && $role['info']){
 				$roleInfo = $role['info'];
-				if(isset($roleInfo['ignoreExt'])){
-					$upload['ignoreExt']  = $roleInfo['ignoreExt'];
-				}
+				// if(isset($roleInfo['ignoreExt'])){
+				// 	$upload['ignoreExt']  = $roleInfo['ignoreExt'];
+				// }
 				if(isset($roleInfo['ignoreFileSize'])){
 					$upload['ignoreFileSize']  = $roleInfo['ignoreFileSize'];
 				}
 			}
 			if($sysOption['downloadSpeedOpen']){//限速大小;
-				$upload['downloadSpeed'] = intval($sysOption['downloadSpeed']);
+				$upload['downloadSpeed'] = floatval($sysOption['downloadSpeed']);
 			}
 		}
 		$upload['chunkSize'] = $upload['chunkSize']*1024*1024;

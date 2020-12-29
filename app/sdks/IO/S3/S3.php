@@ -1111,18 +1111,17 @@ class S3 {
 	 * @param string $bucket     Bucket name
 	 * @param string $uri        Object URI
 	 * @param int    $lifetime   Lifetime in seconds
-	 * @param bool   $hostBucket Use the bucket name as the hostname
 	 *
 	 * @return string
 	 */
-	public function getAuthenticatedURL($bucket, $uri, $lifetime, $hostBucket = false, $subResource = array()){
+	public function getAuthenticatedURL($bucket, $uri, $lifetime, $subResource = array()){
 		// $expires = self::__getTime() + $lifetime;
 		$expires = strtotime(date('Ymd 23:59:59')); // kodbox：签名链接有效期，改为当天有效
 		$uri = str_replace(array('%2F', '%2B'), array('/', '+'), rawurlencode($uri));
 		$ext = http_build_query($subResource);
 		$url = sprintf(
 			'%s/%sAWSAccessKeyId=%s&Expires=%u&Signature=%s', 
-			$hostBucket ? $bucket : self::$endpoint . '/' . $bucket, 
+			self::$endpoint, 
 			$uri . '?' . $ext . ($ext ? '&' : ''),
 			self::$__accessKey, 
 			$expires, 
@@ -1189,7 +1188,6 @@ class S3 {
 		$signing_key = hash_hmac('sha256', 'aws4_request', hash_hmac('sha256', 's3', hash_hmac('sha256', $region, hash_hmac('sha256', $date_text, 'AWS4' . $secret_key, true), true), true), true);
 		$signature = hash_hmac('sha256', $string_to_sign, $signing_key);
 
-		// $host = self::$endpoint . '/' . $bucket;
 		$host = self::$endpoint;
 		$url = $host . $encoded_uri . '?' . $query_string . '&X-Amz-Signature=' . $signature;
 
@@ -1608,13 +1606,11 @@ final class S3Request {
 		$this->bucket = $bucket;
 		$this->uri = $uri !== '' ? '/' . str_replace('%2F', '/', rawurlencode($uri)) : '/';
 
-		$hosts = explode("://", $endpoint);	// ['http://', 's3.amazonaws.com']
+		$this->headers['Host'] = get_url_domain($endpoint);
 		if ($this->bucket !== '') {
 			if ($this->__dnsBucketName($this->bucket)) {
-				$this->headers['Host'] = $hosts[1];
 				$this->resource = '/' . $this->bucket . $this->uri;
 			} else {
-				$this->headers['Host'] = $hosts[1];
 				$this->uri = $this->uri;
 				if ($this->bucket !== '') {
 					$this->uri = '/' . $this->bucket . $this->uri;
@@ -1623,7 +1619,6 @@ final class S3Request {
 				$this->resource = $this->uri;
 			}
 		} else {
-			$this->headers['Host'] = $hosts[1];
 			$this->resource = $this->uri;
 		}
 
@@ -1705,9 +1700,7 @@ final class S3Request {
 				$this->resource .= $query;
 			}
 		}
-		// $host = $this->headers['Host'] !== '' ? $this->headers['Host'] : $this->endpoint;
-		$url = strpos($this->endpoint, $this->bucket) === false ? $this->endpoint . '/' . $this->bucket : $this->endpoint;
-		$url .= $this->uri;
+		$url = $this->endpoint . $this->uri;
 
 		// Basic setup
 		$curl = curl_init();

@@ -80,6 +80,25 @@
 | modifyTime | int(11) unsigned    | 最后修改时间 |
 
 
+### io_file_contents 文件id
+| 字段 | 类型 | 字段说明 |
+| ---- | ---- | ---- |
+| fileID | bigint(20) unsigned   `自动增量`  | 文件ID |
+| content | mediumtext    | 文本文件内容 |
+| createTime | int(11) unsigned    | 创建时间 |
+
+
+### io_file_meta 文件扩展表
+| 字段 | 类型 | 字段说明 |
+| ---- | ---- | ---- |
+| id | bigint(20) unsigned   `自动增量`  | 自增id |
+| fileID | bigint(20) unsigned    | 文件id |
+| key | varchar(255)    | 存储key |
+| value | text    | 对应值 |
+| createTime | int(11) unsigned    | 创建时间 |
+| modifyTime | int(11) unsigned    | 最后修改时间 |
+
+
 ### io_source 文档数据表
 | 字段 | 类型 | 字段说明 |
 | ---- | ---- | ---- |
@@ -170,7 +189,9 @@
 | title | varchar(255)    | 分享标题 |
 | shareHash | varchar(50)    | shareid |
 | userID | bigint(20) unsigned    | 分享用户id |
-| sourceID | bigint(20) unsigned    | 用户数据id |
+| sourceID | bigint(20)    | 用户数据id |
+| sourcePath | varchar(1024)    | 分享文档路径 |
+| url | varchar(255)    | 分享别名,替代shareHash |
 | isLink | tinyint(4) unsigned    | 是否外链分享；默认为0 |
 | isShareTo | tinyint(4) unsigned    | 是否为内部分享；默认为0 |
 | password | varchar(255)    | 访问密码,为空则无密码 |
@@ -178,6 +199,22 @@
 | numView | int(11) unsigned    | 预览次数 |
 | numDownload | int(11) unsigned    | 下载次数 |
 | options | varchar(1000)    | json 配置信息;是否可以下载,是否可以上传等 |
+| createTime | int(11) unsigned    | 创建时间 |
+| modifyTime | int(11) unsigned    | 最后修改时间 |
+
+
+### share_report 分享举报表
+| 字段 | 类型 | 字段说明 |
+| ---- | ---- | ---- |
+| id | bigint(20) unsigned   `自动增量`  | 自增id |
+| shareID | bigint(20) unsigned    | 分享id |
+| title | varchar(255)    | 分享标题 |
+| sourceID | bigint(20) unsigned    | 举报资源id |
+| fileID | bigint(20) unsigned    | 举报文件id,文件夹则该处为0 |
+| userID | bigint(20) unsigned    | 举报用户id |
+| type | tinyint(3) unsigned    | 举报类型 (1-侵权,2-色情,3-暴力,4-政治,5-其他) |
+| desc | text    | 举报原因（其他）描述 |
+| status | tinyint(3) unsigned    | 处理状态(0-未处理,1-已处理,2-禁止分享) |
 | createTime | int(11) unsigned    | 创建时间 |
 | modifyTime | int(11) unsigned    | 最后修改时间 |
 
@@ -256,7 +293,7 @@
 | userID | bigint(20) unsigned    | 用户id |
 | tagID | int(11) unsigned    | 标签id,收藏则为0 |
 | name | varchar(255)    | 收藏名称 |
-| path | varchar(255)    | 收藏路径,tag时则为sourceID |
+| path | varchar(2048)    | 收藏路径,tag时则为sourceID |
 | type | varchar(20)    | source/path |
 | sort | int(11) unsigned    | 排序 |
 | modifyTime | int(11) unsigned    | 最后修改时间 |
