@@ -101,9 +101,9 @@
                 opt.value = '<i class="icon-'+opt.value+'"></i>';
             }
             html += '<p class="' + key + '">\
-                <span class="w30">' + opt.title + '</span>\
+                <span class="w30 row-title">' + opt.title + '</span>\
                 <span class="w30">' + opt.value + '</span>\
-                <span class="w30">' + opt.texts + '</span>\
+                <span class="w30 row-desc">' + opt.texts + '</span>\
                 <span class="w10 ' + opt.check + '"><i class="icon icon-' + opt.icons + '"></i></span>\
                 <span class="clear"></span>\
             </p>';

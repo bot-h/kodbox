@@ -6,7 +6,10 @@ class userView extends Controller{
 	}
 	public function options(){
 		$user = Session::get("kodUser");
-		if(isset($user['metaInfo'])) unset($user['metaInfo']);
+		if( isset($user['metaInfo'])) unset($user['metaInfo']);
+		if( isset($this->config['settings']['language']) ){
+			$this->config['settingAll']['language'] = array();
+		}
 		$options = array(
 			"kod"	=> array(
 				'systemOS'		=> $this->config['systemOS'],
@@ -80,6 +83,7 @@ class userView extends Controller{
 	public function call(){
 		http_close();
 		ActionCall('explorer.index.clearCache');
+		Cache::clearTimeout();
 	}
 	
 	public function parseUrl($link){

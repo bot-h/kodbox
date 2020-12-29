@@ -105,7 +105,7 @@ class explorerUpload extends Controller{
 			"uploadToKod"		=> $isSource,
 			"kodDriverType"		=> $default['driver'],
 		);
-		$linkInfo = $infoData['uploadLinkInfo'];
+		$linkInfo = &$infoData['uploadLinkInfo'];
 		if(isset($linkInfo['host'])){
 		    $linkInfo['host'] = str_replace("http://",'//',$linkInfo['host']);
 		}

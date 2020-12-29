@@ -129,8 +129,12 @@
 .step-box.env .env-table p>span {
     display: inline-block;
     float: left;
-    line-height: 20px;
+	line-height: 20px;
+    padding: 4px 0 0px 0;
 }
+.step-box.env .env-table p:nth-child(even) {background: #fafafa;}
+.step-box.env .env-table .row-title{color:#336;}
+.step-box.env .env-table .row-desc{color:#aaa;}
 
 .step-box .icon-checkmark{
     color: #52c41a;

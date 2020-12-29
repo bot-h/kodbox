@@ -149,7 +149,7 @@ class explorerList extends Controller{
 			$value = array_merge($value,$item);
 		}
 		$result['fileList'] = array_values($fileList);
-		unset($result['pageInfo']);
+		// unset($result['pageInfo']);
 		return $result;
 	}
 	private function listRecentWith($timeType,&$result){
@@ -208,7 +208,6 @@ class explorerList extends Controller{
 		$pageNum	= intval( isset($in['pageNum'])?$in['pageNum']:$pageNum);
 		$pageNum	= $pageNum <= 5 ? 5 : ($pageNum >= $pageNumMax ? $pageNumMax : $pageNum);
 		$pageTotal	= ceil( $totalNum / $pageNum);
-		if($pageTotal <= 1) return;
 		$page		= intval( isset($in['page'])?$in['page']:$page);
 		$page		= $page <= 1 ? 1  : ($page >= $pageTotal ? $pageTotal : $page);
 		$data['pageInfo'] = array(
@@ -217,6 +216,7 @@ class explorerList extends Controller{
 			'page'		=> $page,
 			'pageTotal'	=> $pageTotal,
 		);
+		if($pageTotal <= 1) return;
 
 		$sort = $this->_parseOrder();
 		$isDesc = $sort['desc'] == 'desc';

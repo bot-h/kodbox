@@ -591,7 +591,6 @@ class installIndex extends Controller {
 
         $administrator = Model('SystemRole')->add($administrator);
         Model('SystemRole')->add($default);
-
         return $administrator;
     }
 
