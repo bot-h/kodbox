@@ -143,20 +143,18 @@ class explorerAuth extends Controller {
 	
 	// 外部获取文件读写权限; Action("explorer.auth")->fileCanRead($path);
 	public function fileCanRead($file){
-		if(request_url_safe($file)) return true;
-		$this->isShowError = false;
 		if(!ActionCall('user.authRole.authCanRead')) return false;
-		$result = $this->canView($file) && $this->canRead($file);
-		$this->isShowError = true;
-		return $result;
+		return $this->fileCan($file,'view');
+	}
+	public function fileCanDownload($file){
+		if(!ActionCall('user.authRole.authCanRead')) return false;
+		return $this->fileCan($file,'download');
 	}
 	public function fileCanWrite($file){
-		$this->isShowError = false;
 		if(!ActionCall('user.authRole.authCanEdit')) return false;
-		$result = $this->canWrite($file);
-		$this->isShowError = true;
-		return $result;
+		return $this->fileCan($file,'edit');
 	}
+	
 	public function fileCan($file,$action){
 		if(request_url_safe($file)) return true;
 		$this->isShowError = false;

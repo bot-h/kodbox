@@ -110,6 +110,9 @@ class kodWebDav extends HttpDavServer {
 		if($info && $info['type'] == 'file'){ //单个文件;
 			return array('fileList'=>array($info));
 		}
+		
+		$GLOBALS['in']['pageNum'] = -1;// 分页大小处理--不分页;
+		// show_json(Action('explorer.list')->path($path));
 		return Action('explorer.list')->path($path);
 	}
 	

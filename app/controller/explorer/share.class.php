@@ -379,7 +379,7 @@ class explorerShare extends Controller{
 		$field = array(
 			'name','path','type','size','ext',
 			'createUser','modifyUser','createTime','modifyTime','sourceID',
-			'hasChildFolder','hasChildFile','children','targetType','targetID',			
+			'hasFolder','hasFile','children','targetType','targetID',			
 			'base64','content','charset','oexeContent',
 		);
 		$theItem = array_field_key($item,$field);
@@ -405,14 +405,11 @@ class explorerShare extends Controller{
 	}
 	private function parseName($name){
 		$len = mb_strlen($name);
-		if($len > 4) {
-			$len = $len > 7 ? 3 : $len - 4;
-			$name = mb_substr($name, 0, 2) . str_repeat('*', $len) . mb_substr($name, -2, 2);
-		}else if($len > 2){
-			$len = $len - 2;
-			$name = mb_substr($name, 0, 1) . str_repeat('*', $len) . mb_substr($name, -1, 1);
+		if($len > 3) {
+			$len = ($len > 5 ? 5 : $len) - 2;
+			$name = mb_substr($name, 0, 2) . str_repeat('*', $len);	// AA***
 		}else{
-			$name = mb_substr($name, 0, 1) . str_repeat('*', $len - 1);
+			$name = mb_substr($name, 0, 1) . str_repeat('*', $len - 1);	// A**
 		}
 		return $name;
 	}

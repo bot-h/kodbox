@@ -195,8 +195,9 @@ class explorerTag extends Controller{
 		foreach ($files as $file) {
 			$res = $this->fileAddTag($file,$data['tagID']);
 		}
-		$msg = $res ? LNG('explorer.success') : LNG('explorer.repeatError');
-		show_json($msg,!!$res);
+		show_json(LNG('explorer.success'),true);
+		// $msg = $res ? LNG('explorer.success') : LNG('explorer.repeatError');
+		// show_json($msg,!!$res);
 	}
 	
 	// 标签包含内容数量上限控制;

@@ -86,6 +86,14 @@ class userIndex extends Controller {
 		$upload['chunkSize'] = $upload['chunkSize']*1024*1024;
 		$upload['chunkSize'] = $upload['chunkSize'] <= 1024*1024*0.1 ? 1024*1024*0.4:$upload['chunkSize'];
 		$upload['chunkSize'] = intval($upload['chunkSize']);
+		// 对象存储分片大小
+		$upload['osChunkSize'] = isset($upload['osChunkSize']) ? $upload['osChunkSize'] : 1024*1024*10;
+		if(isset($sysOption['osChunkSize'])) {
+			$upload['osChunkSize'] = floatval($sysOption['chunkSize']);
+		}
+		$upload['osChunkSize'] = $upload['osChunkSize']*1024*1024;
+		$upload['osChunkSize'] = $upload['osChunkSize'] <= 1024*1024*0.1 ? 1024*1024*0.4 : $upload['osChunkSize'];
+		$upload['osChunkSize'] = intval($upload['osChunkSize']);
 	}
 
 	/**
@@ -162,8 +170,6 @@ class userIndex extends Controller {
 	 * @param [type] $password
 	 */
 	public function userInfo($name, $password){
-		$result = Action('user.check')->loginBefore($name,$password);
-		if($result !== true) return $result;
 		$user = Model("User")->userLoginCheck($name,$password);
 		if(!is_array($user)) {
 			$theUser = Hook::trigger("user.index.userInfo",$name, $password);
@@ -171,7 +177,11 @@ class userIndex extends Controller {
 				$user = $theUser? $theUser:false;
 			}
 		}
-		Action('user.check')->loginAfter($name,$user);
+		if(!is_array($user)) return $user;
+		
+		$result = Action('user.check')->loginBefore($user);
+		if($result !== true) return $result;
+		Action('user.check')->loginAfter($user);
 		return $user;
 	}
 	
@@ -319,7 +329,7 @@ class userIndex extends Controller {
 		// Model('SystemOption')->set('maintenance',0);exit;
 		if($update) return Model('SystemOption')->set('maintenance', $value);
 		// 管理员or未启动维护，返回
-		if($GLOBALS['isRoot'] || !Model('SystemOption')->get('maintenance')) return;
+		if((isset($GLOBALS['isRoot']) && $GLOBALS['isRoot']) || !Model('SystemOption')->get('maintenance')) return;
 		show_tips(LNG('common.maintenanceTips'), '','',LNG('common.tips'));
 	}
 }

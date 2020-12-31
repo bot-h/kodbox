@@ -26,11 +26,12 @@ $config['settings'] = array(
 		'ignoreName'		=> '',			// 忽略的文件名,不区分大小写; 逗号隔开,例如: .DS_Store,Thumb.db
 		'chunkRetry'		=> 2,			// 分片上传失败,重传次数;针对每个分片;
 		'sendAsBinary'		=> 0,			// 以二进制方式上传;后端服务器以php://input接收;0则为传统方式上传 $_FILE;
-		'httpSendFile'		=> false,		// 调用webserver下载 /https://www.lovelucy.info/x-sendfile-in-nginx.html	
+		'httpSendFile'		=> false,		// 调用webserver下载 /https://www.lovelucy.info/x-sendfile-in-nginx.html
 		
 		'ignoreExt'			=> '',          // 限制的扩展名; 扩展名在该说明中则自动不上传;
 		'downloadSpeed'		=> 0,			// 下载限速;MB/s*1024*1024; 0代表不限制		
-		'ignoreFileSize'	=> 0			// 许单个文件上传最大值,0则不限制; 单位GB(float)
+		'ignoreFileSize'	=> 0,			// 许单个文件上传最大值,0则不限制; 单位GB(float)
+		'osChunkSize'		=> 10,			// 对象存储分片大小(七牛固定为4Mb)
 	),
 	'fileEditLockTimeout' 	=> 1200,		// 文件编辑锁默认锁定最长时间;默认20分钟;超过了则自动解锁;
 	'fileHistoryMax'		=> 500,			// 文件历史版本默认个数,免费版3个; 大于500则认为不限制
@@ -178,8 +179,7 @@ $config['settingSystemDefault'] = array(
 	'fileEncryption'	=> 'keepName',	// all-全加密;keepExt-加密文件名保留扩展名;keepName-不加密;
 	'passwordErrorLock'	=> '1',			// 密码连续错误锁定账号; 某账号连续输入5次后锁定30s后才能登陆;
 	'passwordRule'		=> 'none',		// 限制密码强度;none-不限制;strong-中等强度;strongMore-高强度
-	'loginIpCheck'		=> '0',			// 登陆ip限制开关;
-	'loginIpAllow'		=> '',			// 登陆允许的ip来源; ip白名单;
+	'loginCheckAllow'	=> '',			// 登陆限制
 	'csrfProtect'		=> '1',		 	// 开启csrf保护	
 	
 	'treeOpen'			=> 'my,myFav,myGroup,rootGroup,recentDoc,fileType,fileTag,driver',//树目录开启功能;
@@ -228,6 +228,7 @@ $config['settingDefault'] = array(
 	'displayHideFile'	=> '0',
 	'filePanel'			=> '1',
 	'messageSendType'	=> 'enter', //enter,ctrlEnter
+	'loginDevice'		=> '',
 );
 $config['editorDefault'] = array(
 	'fontSize'		=> '14px',
@@ -436,7 +437,7 @@ $config['authRoleAction']= array(
 	'explorer.zip'			=> array('explorer.index'=>'zip,zipDownload'),
 
 	'user.edit'				=> array(
-		'user.setting'	=> 'setConfig,setUserInfo,setHeadImage,uploadHeadImage,userChart,userLog',
+		'user.setting'	=> 'setConfig,setUserInfo,setHeadImage,uploadHeadImage,userChart,userLog,userLogLogin,userDevice',
 		// 'user.bind'		=> 'bindApi,bindMetaInfo,oauth,bindWithApp', //被全开放了, 构造函数中自行权限检测;
 	),
 	'user.fav' => array(
@@ -449,6 +450,7 @@ $config['authRoleAction']= array(
 	'admin.index.loginLog'	=> array('admin.log'=>'loginLogList'),
 	'admin.index.log'		=> array('admin.log'=>'get,typelist'),
 	'admin.index.server'	=> array('admin.setting'=>'cacheGet,cacheCheck,cacheSave'),
+	'admin.index.server'	=> array('admin.setting'=>'server'),
 	
 	'admin.role.list'		=> array('admin.role'=>'get'),
 	'admin.role.edit'		=> array('admin.role'=>'add,edit,remove,sort'),

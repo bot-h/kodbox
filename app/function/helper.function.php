@@ -416,7 +416,8 @@ function getDatabaseType(){
 	return $dbType;
 }
 
-function sqlParse($sql){
+// 拆分sql语句
+function sqlSplit($sql){
 	$num = 0;
 	$result = array();
 	$sql = str_replace("\r", "\n", $sql);

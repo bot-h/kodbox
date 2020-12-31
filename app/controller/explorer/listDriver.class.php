@@ -55,6 +55,30 @@ class explorerListDriver extends Controller{
 		}
 		$data['current'] = $this->parsePathIO($data['current']);
 	}
+	
+	public function folderChildrenAppend(&$data,$pathParse){
+		$ioAllow = array('Local');	//'Minio'
+		$isLocal = $pathParse['type'] ? false:true;
+		$isIoAllow = in_array($data['current']['ioType'],$ioAllow);
+		if($pathParse['type'] == KodIO::KOD_BLOCK && $pathParse['id'] != 'driver') return;
+		
+		foreach ($data['folderList'] as $key => $item){
+			if(isset($item['hasFolder'])) continue;
+
+			$info = array('hasFolder'=>true,'hasFile'=> true);
+			if($isLocal || $isIoAllow){
+				$info = IO::has($item['path'],1);
+			}else if($pathParse['type'] == KodIO::KOD_USER_FAV){
+				$itemParse = KodIO::parse($item['path']);
+				if(!$itemParse['type']){
+					$info = IO::has($item['path'],1);
+				}
+			}			
+			$item['hasFolder']  = $info['hasFolder'];
+			$item['hasFile']  	= $info['hasFile'];
+			$data['folderList'][$key] = $item;
+		}
+	}
 		
 	public function parsePathIO($info){
 		if(substr($info['path'],0,4) != '{io:') return $info;

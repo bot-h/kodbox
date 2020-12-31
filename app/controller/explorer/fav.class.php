@@ -51,9 +51,6 @@ class explorerFav extends Controller{
 				$item = array_merge($item,$info);
 				if($item['type'] == 'file'){
 					$item['ext'] = get_path_ext($item['name']);
-				}else if(!isset($item["hasChildFolder"])){
-					$item["hasChildFolder"] = true;
-					$item["hasChildFile"] = true;
 				}
 			}
 		}
@@ -72,17 +69,18 @@ class explorerFav extends Controller{
 		foreach ($data as $type =>&$list) {
 			if(!in_array($type,array('fileList','folderList','groupList'))) continue;
 			foreach ($list as $key=>$item){
-				$list[$key] = $this->favAppendItem($item,$favList);
+				$list[$key] = $this->favAppendItem($item);
 			}
 		}
-		$data['current'] = $this->favAppendItem($data['current'],$favList);
+		$data['current'] = $this->favAppendItem($data['current']);
 		// $data['favList'] = $favList;pr($data,$favList);exit;
 	}
-	public function favAppendItem($item,$favList){
-		static $cacheList = false;
-		if($favList){$cacheList = $favList;}
-		if($cacheList === false){$cacheList = $this->model->listData();}
-		if(!$favList){$favList = $cacheList;}
+	public function favAppendItem($item){
+		static $favList = false;
+		if($favList === false){
+			$favList = $this->model->listData();
+			$favList = array_to_keyvalue($favList,'path');
+		}
 		
 		if(!isset($item['sourceInfo'])){
 			$item['sourceInfo'] = array();
@@ -102,8 +100,6 @@ class explorerFav extends Controller{
 		// $item['$favItem'] = $favItem;		
 		// 收藏文件;
 		if($item['type'] == 'file'){
-			unset($item['hasChildFile']);
-			unset($item['hasChildFolder']);
 			$item['ext'] = get_path_ext($item['name']);
 		}
 		
@@ -113,6 +109,7 @@ class explorerFav extends Controller{
 			$authValue = $item['auth']['authValue'];
 			$item['canDownload'] = Model('Auth')->authCheckDownload($authValue);
 		}
+		$item = Hook::filter('explorer.list.itemParse',$item);
 		return $item;
 	}
 

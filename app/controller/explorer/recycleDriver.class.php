@@ -54,12 +54,19 @@ class explorerRecycleDriver extends Controller{
 		$list = $this->listData();
 		$listNew = $list;
 		foreach ($list as $toPath => $fromPath){
+			$parse = KodIO::parse($toPath);
+			if($parse['driverType'] == 'io') {
+				$info = Model('Storage')->driverInfo($parse['id']);
+				if(!$info) {
+					unset($listNew[$toPath]);
+					continue;
+				}
+			}
 			$info = IO::info($toPath);
 			if(!$info){
 				unset($listNew[$toPath]);
 				continue;
 			}
-			
 			$info['path'] = rtrim($fromPath,'/').'/'.$info['name'];
 			if($info['type'] == 'folder'){
 				$data['folderList'][] = $info;

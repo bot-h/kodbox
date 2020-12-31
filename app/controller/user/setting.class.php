@@ -294,7 +294,18 @@ class userSetting extends Controller {
 	}
 	// 个人操作日志
 	public function userLog(){
-		ActionCall('admin.log.userLog');
+		$type = Input::get('type', null, null);
+		$action = $type == 'user.index.loginSubmit' ? 'userLogLogin' : 'userLog';
+		ActionCall('admin.log.' . $action);
+	}
+	// 个人登录设备
+	public function userDevice(){
+		$data = Input::getArray(array(
+			'userID'	=> array('default' => USER_ID),
+			'lastLogin'	=> array('default' => null),
+		));
+		$res = Model('SystemLog')->deviceList($data['userID'], $data['lastLogin']);
+		show_json($res);
 	}
 
 	public function taskList(){

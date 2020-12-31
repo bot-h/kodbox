@@ -226,6 +226,8 @@ class userBind extends Controller {
 			'weixin' => 'wx',
 			'github' => 'gh',
 		);
+		// 判断昵称是否重复
+		$data['nickName'] = $this->nickNameAuto($data['nickName']);
 		// 1.写入用户主信息
 		$param = array(
 			'name'		 => $typeList[$type] . substr(guid(), 0, 10),
@@ -249,6 +251,13 @@ class userBind extends Controller {
 		if (!$this->bindSave($data, $data['userID'])) return array('code' => false, 'data' => LNG('user.bindUpdateError'));
 		$this->addUser = true;
 		return array('code' => true, 'data' => $data['userID']);
+	}
+	// 获取昵称
+	private function nickNameAuto($nickName){
+		$where = array('nickName' => array('like', $nickName.'%'));
+		$cnt = Model('User')->where($where)->count();
+		if(!$cnt) return $nickName;
+		return $nickName . str_pad(($cnt + 1), 2, '0', STR_PAD_LEFT);
 	}
 
 	/**

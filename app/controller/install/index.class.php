@@ -8,14 +8,14 @@
 class installIndex extends Controller {
     public $roleID;
     public $admin = array();
-    public $setingUser; 
+    public $userSetting; 
     public $installLock; 
     public $installFastLock; 
     public $dbType;
     public $dbWasSet = 'dbWasSet';
 	public function __construct() {
         parent::__construct();
-        $this->setingUser       = BASIC_PATH  . 'config/setting_user.php';
+        $this->userSetting      = BASIC_PATH  . 'config/setting_user.php';
         $this->installLock      = USER_SYSTEM . 'install.lock';
         $this->installFastLock  = USER_SYSTEM . 'fastinstall.lock';
 		$this->authCheck();
@@ -74,16 +74,16 @@ class installIndex extends Controller {
         exit;
     }
     private function installCheck(){
-        if(@file_exists($this->installLock) && @file_exists($this->setingUser)) {
+        if(@file_exists($this->installLock) && @file_exists($this->userSetting)) {
             if($this->dbDefault(true)) return true;
         }
-        if(!@file_exists($this->setingUser)) del_file($this->installLock);
+        if(!@file_exists($this->userSetting)) del_file($this->installLock);
         return false;
     }
     // 一键安装
     private function installFast(){
         $data = array('installFast' => 0, 'installAuto' => '');
-        if(!@file_exists($this->installFastLock) || !@file_exists($this->setingUser)) {
+        if(!@file_exists($this->installFastLock) || !@file_exists($this->userSetting)) {
             return $data;
         }
         $data['installFast'] = 1;
@@ -250,7 +250,7 @@ class installIndex extends Controller {
         // 判断所需缓存配置是否有效——redis、memcached
         if(in_array($cacheType, array('redis', 'memcached'))){
             if(!extension_loaded($cacheType)){
-                show_json(sprintf(LNG('common.env.invalidExt'), "[{$cacheType}]"), false);
+                show_json(sprintf(LNG('common.env.invalidExt'), "php-[{$cacheType}]"), false);
             }
             $type = ucfirst($cacheType);
             $handle = new $type();
@@ -310,7 +310,7 @@ class installIndex extends Controller {
             $text[] = "\$config['cache']['{$cacheType}']['host'] = '{$host}';";
             $text[] = "\$config['cache']['{$cacheType}']['port'] = '{$port}';";
         }
-        $file = $this->setingUser;
+        $file = $this->userSetting;
         if(!@file_exists($file)) @touch($file);
         $content = file_get_contents($file);
 		$pre = '';
@@ -318,10 +318,10 @@ class installIndex extends Controller {
             $pre = PHP_EOL;
             unset($text[0]);
         }
-		$content = implode(PHP_EOL, $text);
-		$replaceFrom = "'DB_NAME' => '".USER_SYSTEM;
-		$replaceTo   = "'DB_NAME' => USER_SYSTEM.'";
-		$content = str_replace($replaceFrom,$replaceTo,$content);		
+        $content = implode(PHP_EOL, $text);
+        if($this->dbType == 'sqlite') {
+            $content = $this->sqliteFilter($content);
+        }
         if(!file_put_contents($file,$pre.$content, FILE_APPEND)) {
             $msg = LNG('admin.install.dbSetError');
             $tmp = explode('<br/>', LNG('common.env.pathPermissionError'));
@@ -333,6 +333,15 @@ class installIndex extends Controller {
         $this->createTable($db);
         show_json(LNG('explorer.success'));
     }
+    private function sqliteFilter($content) {
+		$replaceFrom = "'DB_NAME' => '".USER_SYSTEM;
+		$replaceTo   = "'DB_NAME' => USER_SYSTEM.'";
+		$replaceFrom2= "'DB_DSN' => 'sqlite:".USER_SYSTEM;
+		$replaceTo2  = "'DB_DSN' => 'sqlite:'.USER_SYSTEM.'";
+		$content = str_replace($replaceFrom,$replaceTo,$content);
+		$content = str_replace($replaceFrom2,$replaceTo2,$content);
+		return $content;
+	}
 
     /**
      * 创建数据表
@@ -344,7 +353,7 @@ class installIndex extends Controller {
 		if (!@file_exists($dbFile)) {
 			show_json(LNG('admin.install.dbFileError'), false);
 		}
-		$sqlArr = sqlParse(file_get_contents($dbFile));
+		$sqlArr = sqlSplit(file_get_contents($dbFile));
 		foreach($sqlArr as $sql){
 			$db->execute($sql);
 		}

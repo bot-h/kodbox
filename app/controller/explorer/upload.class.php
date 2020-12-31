@@ -82,7 +82,7 @@ class explorerUpload extends Controller{
 	private function authorizeCheck(){
 		if( !isset($this->in['authorize']) ) return;
 		$inPath = $this->in['path'];
-		if(IO::isType($inPath, "DB")){
+		if(substr(IO::getType($inPath), 0, 2) == 'db'){
 			$path = KodIO::defaultIO().$inPath;
 		}else{
 			$pathBase = substr($inPath, 0, stripos($inPath, '/'));
@@ -107,7 +107,7 @@ class explorerUpload extends Controller{
 		$isSource   = false;
 		$hashSimple = isset($this->in['checkHashSimple']) ? $this->in['checkHashSimple']:false;
 		$hashMd5    = isset($this->in['checkHashMd5']) ? $this->in['checkHashMd5']:false;
-		if(IO::isType($savePath, "DB") && $hashSimple ){
+		if(substr(IO::getType($savePath), 0, 2) == 'db' && $hashSimple ){
 			$isSource = true;
 			$file = Model("File")->findByHash($hashSimple,$hashMd5);
 		}else{

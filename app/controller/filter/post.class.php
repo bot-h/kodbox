@@ -71,7 +71,7 @@ class filterPost extends Controller{
 	// csrfToken检测; 允许UA为APP,PC客户端的情况;
 	private function checkCsrfToken(){
 		if(isset($_REQUEST['accessToken'])) return;
-		if( $this->in['CSRF_TOKEN'] != Cookie::get('CSRF_TOKEN')){
+		if( isset($this->in['CSRF_TOKEN']) && $this->in['CSRF_TOKEN'] != Cookie::get('CSRF_TOKEN')){
 			return show_json('CSRF_TOKEN error!',false);
 		}
 	}

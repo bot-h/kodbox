@@ -31,34 +31,30 @@ class explorerUserShare extends Controller{
 	
 	// 文件列表,某个路径自己分享了,则追加分享信息;
 	public function shareDriverAppend(&$data){
-		$shareList = $this->model->listSimple();
-		$shareList = array_to_keyvalue($shareList,'sourcePath');
 		foreach ($data as $type =>&$list) {
 			if(!in_array($type,array('fileList','folderList','groupList'))) continue;
 			foreach ($list as $key=>$item){
-				$list[$key] = $this->shareAppendItem($item,$shareList);
+				$list[$key] = $this->shareAppendItem($item);
 			}
 		}
-		$data['current'] = $this->shareAppendItem($data['current'],$shareList);
+		$data['current'] = $this->shareAppendItem($data['current']);
 	}
 	
 	// 分享信息处理;
-	public function shareAppendItem($item,$list){
+	public function shareAppendItem($item){
 		$shareInfo = $item['shareInfo'];
 		if(!isset($item['sourceInfo'])){$item['sourceInfo'] = array();}
-		if(isset($item['shareInfo'])){unset($item['shareInfo']);}
 		if(isset($item['sourceInfo']['shareInfo']) ) return $item;
 		
-		static $cacheList = false;
-		if($list){$cacheList = $list;}
-		if($cacheList === false){
-			$cacheList = array_to_keyvalue($this->model->listSimple(),'sourcePath');
+		static $shareList = false;
+		if($shareList === false){
+			$shareList = $this->model->listSimple();
+			$shareList = array_to_keyvalue($shareList,'sourcePath');
 		}
-		if(!$list){$list = $cacheList;}
 		
-		$shareInfo = $shareInfo ? $shareInfo : $list[$item['path']];
-		$shareInfo = $shareInfo ? $shareInfo : $list[rtrim($item['path'],'/')];
-		$shareInfo = $shareInfo ? $shareInfo : $list[rtrim($item['path'],'/').'/'];
+		$shareInfo = $shareInfo ? $shareInfo : $shareList[$item['path']];
+		$shareInfo = $shareInfo ? $shareInfo : $shareList[rtrim($item['path'],'/')];
+		$shareInfo = $shareInfo ? $shareInfo : $shareList[rtrim($item['path'],'/').'/'];
 		if(!$shareInfo) return $item;
 		
 		$item['sourceInfo']['shareInfo'] = array(
@@ -74,9 +70,10 @@ class explorerUserShare extends Controller{
 	/**
 	 * 我的分享列表
 	 * 点击进入对应文档目录；
+	 * link/to
 	 */
-	public function myShare(){
-		$shareList = $this->model->listData();
+	public function myShare($type=''){
+		$shareList = $this->model->listData($type);
 		$result = array('fileList'=>array(),'folderList'=>array(),'pageInfo'=>$shareList['pageInfo']);
 		$sourceArray = array_to_keyvalue($shareList['list'],'','sourceID');
 		$sourceArray = array_unique($sourceArray);
@@ -93,6 +90,7 @@ class explorerUserShare extends Controller{
 		foreach ($shareList['list'] as $shareItem) {
 			// 物理路径,io路径;
 			if($shareItem['sourceID'] == '0'){
+				// IO 对象存储等加速;
 				$info = IO::info($shareItem['sourcePath']);
 			}else{
 				$info = $sourceArray[$shareItem['sourceID']];
@@ -113,7 +111,10 @@ class explorerUserShare extends Controller{
 		return $result;
 	}
 	
-	public function shareToMe(){
+	public function shareToMe($type=''){
+		$shareHide = Model('UserOption')->get('hideList','shareToMe');
+		$shareHide = $shareHide ? json_decode($shareHide,true):array();
+		
 		$shareList = $this->model->listToMe();
 		$result = array('fileList'=>array(),'folderList'=>array(),'pageInfo'=>$shareList['pageInfo']);
 		$sourceArray = array_to_keyvalue($shareList['list'],'','sourceID');
@@ -140,11 +141,46 @@ class explorerUserShare extends Controller{
 			}
 			$info = $this->_shareItemeParse($info,$shareItem);
 			$key  = $info['type'] == 'folder' ? 'folderList':'fileList';
+			
+			$shareID = $info['shareID'].'';
+			if(isset($shareHide[$shareID])){
+				$info['shareHide'] = 1;
+			}else{
+				$info['shareHide'] = 0;
+			}
+			
+			//$type:  '':显示内容; hide: 隐藏内容; all: 全部内容;
+			if($type == '' && $info['shareHide']) continue;
+			if($type == 'hide' && !$info['shareHide']) continue;
+									
 			$result[$key][] = $info;
 		}
 		// if($notExist){$this->model->remove($notExist);} // 自动清除不存在的分享内容;
+		// pr($result);exit;
+		
 		return $result;
 	}
+	
+	public function shareDisplay(){
+		$data = Input::getArray(array(
+			"shareArr"	=> array("check"=>"json","default"=>''),
+			"isHide"	=> array("check"=>"bool","default"=>'1'),
+		));
+		
+		$shareHide = Model('UserOption')->get('hideList','shareToMe');
+		$shareHide = $shareHide ? json_decode($shareHide,true):array();
+		foreach ($data['shareArr'] as $shareID) {
+			$shareID = $shareID.'';
+			if($data['isHide'] == '1'){
+				$shareHide[$shareID] = '1';
+			}else{
+				unset($shareHide[$shareID]);
+			}
+		}
+		Model('UserOption')->set('hideList',json_encode($shareHide),'shareToMe');
+		show_json(LNG('explorer.success'),true);
+	}
+	
 	
 	// 分享内容属性; 默认$sourceID为空则分享本身属性; 指定则文件夹字内容属性;
 	public function sharePathInfo($shareID,$sourceID=false){
@@ -231,7 +267,6 @@ class explorerUserShare extends Controller{
 		$source['shareCreateTime'] 	= $share['createTime'];
 		$source['shareModifyTime'] 	= $share['modifyTime'];
 		$source['shareID']  = $share['shareID'];
-		$source['shareInfo'] = $share;
 		$sourceRoot = $share['sourceInfo'] ? $share['sourceInfo'] : $source;
 		
 		// 物理路径,io路径;
@@ -272,7 +307,10 @@ class explorerUserShare extends Controller{
 			$source['isWriteable'] = AuthModel::authCheckEdit($source['auth']['authValue']);
 			$source['isReadable']  = AuthModel::authCheckView($source['auth']['authValue']);
 		}
-		// pr($source,$sourceBefore,$share);
+		if(isset($source['sourceInfo']['tagInfo'])){
+			unset($source['sourceInfo']['tagInfo']);
+		}
+		// pr($source,$sourceBefore,$share);exit;
 		return $source;
 	}
 	
@@ -354,11 +392,23 @@ class explorerUserShare extends Controller{
 	}
 
 	/**
-	 * 删除
+	 * 批量取消分享;
+	 * 如果制定了分享类型: 则不直接删除数据; 
 	 */
 	public function del() {
 		$list  = Input::get('dataArr','json');
-		$res   = $this->model->remove($list);
+		if( !isset($this->in['type']) ){
+			$res = $this->model->remove($list);
+		}else{
+			// 批量删除指定内部协作分享, or外链分享;
+			foreach ($list as $shareID) {
+				$data = array('isLink'=>0);
+				if($this->in['type'] == 'shareTo'){
+					$data = array('isShareTo'=>0,'authTo'=>array());
+				}
+				$res = $this->model->shareEdit($shareID,$data);
+			}
+		}
 		$msg  = !!$res ? LNG('explorer.success'): LNG('explorer.error');
 		show_json($msg,!!$res);
 	}

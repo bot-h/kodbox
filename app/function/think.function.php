@@ -49,7 +49,7 @@ function think_exception($msg) {
 		$callTrace = $msg->getTrace();
 		$last = $callTrace[0];
 		$desc = $last['function'].'(); ';
-		if($last['class']){
+		if(isset($last['class'])){
 			$desc = $last['class'].'->'.$desc;
 		}
 		$desc  = $fileLine.$desc;

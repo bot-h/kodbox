@@ -24,19 +24,21 @@ class explorerList extends Controller{
 		$path     = $path != '/' ? rtrim($path,'/') : '/';//路径保持统一;
 		$path 	  = $this->checkDesktop($path);
 		$pathParse= KodIO::parse($path);
+		$id 	  = $pathParse['id'];
 		switch($pathParse['type']){
 			case KodIO::KOD_USER_FAV:			$data = Action('explorer.fav')->get();break;
 			case KodIO::KOD_USER_RECYCLE:		$data = $this->model->listUserRecycle();break;
-			case KodIO::KOD_USER_FILE_TAG:		$data = $this->model->listUserTag($pathParse['id']);break;
-			case KodIO::KOD_USER_FILE_TYPE:		$data = $this->model->listPathType($pathParse['id']);break;
+			case KodIO::KOD_USER_FILE_TAG:		$data = $this->model->listUserTag($id);break;
+			case KodIO::KOD_USER_FILE_TYPE:		$data = $this->model->listPathType($id);break;
 			case KodIO::KOD_USER_RECENT:		$data = $this->listRecent();break;
 			case KodIO::KOD_GROUP_ROOT_SELF:	$data = Action('explorer.listGroup')->groupSelf($pathParse);break;
-			case KodIO::KOD_USER_SHARE:			$data = Action('explorer.userShare')->myShare();break;
-			case KodIO::KOD_USER_SHARE_TO_ME:	$data = Action('explorer.userShare')->shareToMe();break;
+			case KodIO::KOD_USER_SHARE:			$data = Action('explorer.userShare')->myShare('to');break;
+			case KodIO::KOD_USER_SHARE_LINK:	$data = Action('explorer.userShare')->myShare('link');break;			
+			case KodIO::KOD_USER_SHARE_TO_ME:	$data = Action('explorer.userShare')->shareToMe($id);break;
 			case KodIO::KOD_SHARE_ITEM:			$data = Action('explorer.userShare')->sharePathList($pathParse);break;
 			case KodIO::KOD_SHARE_LINK:			$data = Action('explorer.share')->pathList();break;
 			case KodIO::KOD_SEARCH:				$data = Action('explorer.listSearch')->listSearch($pathParse);break;
-			case KodIO::KOD_BLOCK:				$data = $this->blockChildren($pathParse['id']);break;
+			case KodIO::KOD_BLOCK:				$data = $this->blockChildren($id);break;
 			case KodIO::KOD_SOURCE:				$data = IO::listPath($path);break;
 			case KodIO::KOD_IO:					$data = IO::listPath($path);break;
 			default:$data = IO::listPath($path);break;
@@ -59,6 +61,7 @@ class explorerList extends Controller{
 		Action('explorer.fav')->favAppend($data);
 		Action('explorer.userShare')->shareDriverAppend($data);
 		Action('explorer.listDriver')->driverAppend($data);
+		Action('explorer.listDriver')->folderChildrenAppend($data,$pathParse);
 		$this->pageReset($data);
 	}	
 	
@@ -155,15 +158,22 @@ class explorerList extends Controller{
 
 	private function pageParse(&$data){
 		if(isset($data['pageInfo'])) return;
-		$in = $this->in; $pageNum = 3000; $page=1; //webdav列表处理;
+		$in = $this->in;
 		$pageNumMax = 5000;
+		$pageNum = isset($in['pageNum'])?$in['pageNum']: 3000;
+		if($pageNum === -1){ // 不限分页情况; webdav列表处理;
+			unset($in['pageNum']);
+			$pageNumMax = 100000000;
+			$pageNum = $pageNumMax;
+		}
+				
 		$fileCount  = count($data['fileList']);
 		$folderCount= count($data['folderList']);
 		$totalNum	= $fileCount + $folderCount;
-		$pageNum	= intval( isset($in['pageNum'])?$in['pageNum']:$pageNum);
+		$pageNum 	= intval($pageNum);
 		$pageNum	= $pageNum <= 5 ? 5 : ($pageNum >= $pageNumMax ? $pageNumMax : $pageNum);
 		$pageTotal	= ceil( $totalNum / $pageNum);
-		$page		= intval( isset($in['page'])?$in['page']:$page);
+		$page		= intval( isset($in['page'])?$in['page']:1);
 		$page		= $page <= 1 ? 1  : ($page >= $pageTotal ? $pageTotal : $page);
 		$data['pageInfo'] = array(
 			'totalNum'	=> $totalNum,
@@ -300,8 +310,8 @@ class explorerList extends Controller{
 	}
 	
 	public function pathInfoParse($pathInfo){
-		$pathInfo = Action('explorer.fav')->favAppendItem($pathInfo,false);
-		$pathInfo = Action('explorer.userShare')->shareAppendItem($pathInfo,false);
+		$pathInfo = Action('explorer.fav')->favAppendItem($pathInfo);
+		$pathInfo = Action('explorer.userShare')->shareAppendItem($pathInfo);
 		$pathInfo = Action('explorer.listDriver')->parsePathIO($pathInfo);
 		$pathInfo['pathDisplay'] = $pathInfo['pathDisplay']? $pathInfo['pathDisplay']: $pathInfo['path'];
 		return $pathInfo;
@@ -489,6 +499,7 @@ class explorerList extends Controller{
 				'targetID' 		=> $groupRoot,
 			),
 			"myGroup"=> $this->ioInfo(KodIO::KOD_GROUP_ROOT_SELF),
+			'shareToMe'=> $this->ioInfo(KodIO::KOD_USER_SHARE_TO_ME),
 		);
 		
 		$groupInfo 	= Session::get("kodUser.groupInfo");
@@ -525,7 +536,6 @@ class explorerList extends Controller{
 		
 		// 单独添加driver情况;更新后处理;  单独加入文件类型开关,则根据flag标记;自动处理;
 		// my,myFav,myGroup,rootGroup,recentDoc,fileType,fileTag,driver
-		$checkFlag = false;
 		$checkType = array(
 			'treeOpenMy' 		=> 'my',
 			'treeOpenMyGroup' 	=> 'myGroup',
@@ -538,6 +548,7 @@ class explorerList extends Controller{
 			'treeOpenRootGroup'	=> 'rootGroup',
 		);
 		foreach ($checkType as $keyType=>$key){
+			if(isset($GLOBALS['TREE_OPTION_IGNORE']) && $GLOBALS['TREE_OPTION_IGNORE'] == '1') break;
 			if( $option[$keyType] !='ok'){
 				$model->set($keyType,'ok');
 				$model->set('treeOpen',$option['treeOpen'].','.$key);
@@ -576,7 +587,7 @@ class explorerList extends Controller{
 		$list = $this->ioInfo(array(
 			KodIO::KOD_USER_RECENT,
 			KodIO::KOD_USER_SHARE,
-			KodIO::KOD_USER_SHARE_TO_ME,
+			KodIO::KOD_USER_SHARE_LINK,
 			KodIO::KOD_USER_RECYCLE,
 		));
 		if(!$this->pathEnable('recentDoc')){
@@ -590,7 +601,8 @@ class explorerList extends Controller{
 			KodIO::KOD_USER_FAV			=> LNG('explorer.toolbar.fav'),
 			KodIO::KOD_GROUP_ROOT_SELF	=> LNG('explorer.toolbar.myGroup'),
 			KodIO::KOD_USER_RECENT		=> LNG('explorer.toolbar.recentDoc'),
-			KodIO::KOD_USER_SHARE		=> LNG('explorer.toolbar.myShare'),
+			KodIO::KOD_USER_SHARE		=> LNG('explorer.toolbar.shareTo'),
+			KodIO::KOD_USER_SHARE_LINK	=> LNG('explorer.toolbar.shareLink'),
 			KodIO::KOD_USER_SHARE_TO_ME	=> LNG('explorer.toolbar.shareToMe'),
 			KodIO::KOD_USER_RECYCLE		=> LNG('explorer.toolbar.recycle'),
 			KodIO::KOD_SEARCH			=> LNG('common.search'),

@@ -830,15 +830,15 @@ function get_caller_trace($trace) {//return array();
 		}else if(isset($call['class'])){
 			$call['object'] = $call['class'];
 		}
-		
-		$file = str_replace(BASIC_PATH,'',$call['file']);
-		$traceText[$i] = $file.'['.$call['line'].'] ';
+        
+		$file = !isset($call['file']) ? null : str_replace(BASIC_PATH,'',$call['file']);
+		$traceText[$i] = !isset($call['line']) ? null : $file.'['.$call['line'].'] ';
 		$traceText[$i].= empty($call['object'])? '': $call['object'].$call['type']; 
 		if( $call['function']=='show_json' || 
 			$call['function'] =='think_trace'){
 			$traceText[$i].= $call['function'].'(args)';
 		}else{
-			$args  = is_array($call['args']) ? $call['args'] : array();
+			$args  = (isset($call['args']) && is_array($call['args'])) ? $call['args'] : array();
 			$param = json_encode(array_parse_deep($args));
 			$param = str_replace(array('\\/','\/','\\\\/','\"'),array('/','/','/','"'),$param);
 			if(substr($param,0,1) == '['){
@@ -1219,11 +1219,11 @@ function pr(){
 	ob_start();
 	
 	$callFile = $trace[0];$callAt = $trace[1];
-	if($trace[2]['function'] == 'pr_trace'){
+	if(isset($trace[2]) && $trace[2]['function'] == 'pr_trace'){
 	    $callFile = $trace[2];$callAt = $trace[3];
 	}
 	$method = $callAt['function'];
-	if($callAt['class']){
+	if(isset($callAt['class'])){
 	    $method = $callAt['class'].'->'.$callAt['function'];
 	}
 	$fileInfo = get_path_this($callFile['file']).'; '.$method.'()';

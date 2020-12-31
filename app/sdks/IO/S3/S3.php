@@ -16,7 +16,7 @@ class S3 {
 	const AMZ_LENGTH = 'length';
 	const MAX_PART_NUM = 1000;
 	const MIN_PART_SIZE = 10485760; // 最小分片10M
-	const MAX_PART_SIZE = 5368709120;
+	const MAX_PART_SIZE = 5368709120; // 最大分片5G
 	const UPLOAD_RETRY = 3; // 分片、整合失败,重试3次
 
 	private static $__accessKey = null;
@@ -37,6 +37,7 @@ class S3 {
 	private static $__signingKeyResource = false;
 	public static $progressFunction = null;
 	public static $signVer = 'v4';
+	public static $chunkSize = 10485760; // 分片大小，默认10Mb
 
 	/**
 	 * Constructor - if you're not using the class statically.
@@ -88,6 +89,14 @@ class S3 {
 		}
 
 		return empty($region) ? 'us-east-1' : $region;
+	}
+
+	/**
+	 * set multiUpload/Copy chunk size
+	 * @return void
+	 */
+	public function setChunkSize($chunkSize){
+		self::$chunkSize = !$chunkSize ? self::MIN_PART_SIZE : $chunkSize;
 	}
 
 	/**
@@ -676,7 +685,7 @@ class S3 {
 		$fileSize = $info['size'];
 
 		$uploadPosition = 0;
-		$pieces = self::__generateParts($fileSize, self::MIN_PART_SIZE);
+		$pieces = self::__generateParts($fileSize, self::$chunkSize);
 		$partList = array();
 		foreach ($pieces as $i => $piece) {
 			$fromPos = $uploadPosition + (int) $piece[self::AMZ_SEEK_TO];
@@ -719,7 +728,7 @@ class S3 {
 		if (!$uploadId) return false;
 		$fileSize = filesize($file);
 
-		$pieces = self::__generateParts($fileSize, self::MIN_PART_SIZE);
+		$pieces = self::__generateParts($fileSize, self::$chunkSize);
 
 		$partList = array();
 		foreach ($pieces as $i => $piece) {

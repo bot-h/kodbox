@@ -16,13 +16,13 @@ class adminMember extends Controller{
 	}
 
 	public function authCheck(){
-		if($GLOBALS['isRoot']) return;
+		if(isset($GLOBALS['isRoot']) && $GLOBALS['isRoot']) return;
 		if(MOD == 'install') return;
 		$data = Input::getArray(array(
 			"userID"	=> array("default"=>null),
 			"roleID"	=> array("default"=>2),
 		));
-		if($data['userID'] == '1') {
+		if(isset($data['userID']) && $data['userID'] == '1') {
 			show_json(LNG('admin.member.editNoAuth'), false);
 		}
 		if(!in_array(ACTION, array('admin.member.add', 'admin.member.edit'))) return;

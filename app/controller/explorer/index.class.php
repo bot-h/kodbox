@@ -24,6 +24,13 @@ class explorerIndex extends Controller{
 		if(count($fileList) == 1){
 			$result = $result[0];
 			$result = Model('SourceAuth')->authOwnerApply($result);
+			
+			// md5;
+			if( $result['type'] == 'file' && 
+				( $result['size'] <= 50*1024*1024 || $this->in['getMore'] )
+			){
+				$result['hashMd5'] = IO::hashMd5($result['path']);
+			}
 		}
 		$data = !!$result ? $result : LNG('common.pathNotExists');
 		show_json($data,!!$result);

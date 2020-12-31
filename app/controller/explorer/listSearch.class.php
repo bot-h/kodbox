@@ -27,8 +27,6 @@ class explorerListSearch extends Controller{
 		if(in_array('content',$param['option'])){
 			$list['listTypeSet'] = 'list';
 		}
-		
-		// $this->parseShareList($list,$sourceInfo);
 		$list['searchParam']  = $paramIn;
 		$list['searchParent'] = $sourceInfo;
 		if($param['parentPath']){
@@ -134,18 +132,6 @@ class explorerListSearch extends Controller{
 		}
 		$param['parentID'] = $sourceInfo['sourceID'];
 		if(!isset($param['option'])) $param['option'] = array();
-	}
-	private function parseShareList(&$list,$sourceInfo){
-		if(!$sourceInfo['shareUser']) return;
-		$share = Action("explorer.userShare");
-		$shareInfo	= Model('Share')->getInfo($sourceInfo['shareID']);
-
-		foreach ($list as $key => &$keyList) {
-			if($key != 'folderList' && $key != 'fileList' ) continue;
-			foreach ($keyList as &$source) {
-				$source = $share->_shareItemeParse($source,$shareInfo);
-			}
-		}
 	}
 	
 	/**
@@ -257,9 +243,17 @@ class explorerListSearch extends Controller{
 	
 	// 多个搜索词并列搜索; "且"语法,返回同时包含的内容;
 	private function matchWords($name,$search){
-		$searchArr = explode(' ',trim($search));
+		$wordsArr  = explode(' ',trim($search));
 		$result    = true;
-		foreach($searchArr as $searchWord){
+		if( strlen($search) > 2 &&
+			(substr($search,0,1) == '"' && substr($search,-1)  == '"') ||
+			(substr($search,0,1) == "'" && substr($search,-1)  == "'")
+		){
+			$search = substr($search,1,-1);
+			$wordsArr = array($search);
+		}
+		
+		foreach($wordsArr as $searchWord){
 			$searchWord = trim($searchWord);
 			if(!$searchWord) continue;
 			if(stripos($name,$searchWord) === false){
