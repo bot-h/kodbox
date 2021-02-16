@@ -84,7 +84,7 @@ function get_filesize($path){
 	}
 	
 	$fp = fopen($path,"r");
-	if(!$fp) return $result;	
+	if(!$fp) return 0;	
 	if (fseek($fp, 0, SEEK_END) === 0) {
 		$result = 0.0;
 		$step = 0x7FFFFFFF;
@@ -810,11 +810,12 @@ function chmod_path($path,$mod=0777){
 function size_format($bytes, $precision = 2){
 	if ($bytes == 0) return "0 B";
 	$unit = array(
-		'TB' => 1099511627776,  // pow( 1024, 4)
-		'GB' => 1073741824,		// pow( 1024, 3)
-		'MB' => 1048576,		// pow( 1024, 2)
-		'kB' => 1024,			// pow( 1024, 1)
-		'B ' => 1,				// pow( 1024, 0)
+		'PB' => 1099511627776*1024,  // pow( 1024, 5)
+		'TB' => 1099511627776,  	 // pow( 1024, 4)
+		'GB' => 1073741824,			 // pow( 1024, 3)
+		'MB' => 1048576,			 // pow( 1024, 2)
+		'kB' => 1024,				 // pow( 1024, 1)
+		'B ' => 1,					 // pow( 1024, 0)
 	);
 	foreach ($unit as $un => $mag) {
 		if (doubleval($bytes) >= $mag)

@@ -198,6 +198,10 @@ function check_abort(){
 		exit;
 	}
 }
+function check_aborted(){
+	// connection_aborted();
+	exit;
+}
 function ignore_timeout(){
 	$GLOBALS['ignore_abort'] = 1;
 	@ignore_user_abort(true);
@@ -797,11 +801,12 @@ function show_tips($message,$url= '', $time = 3,$title = ''){
 	#msgbox{box-shadow: 0px 10px 40px rgba(0, 0, 0, 0.1);padding: 20px 40px 40px 40px;
     	border-radius: 5px;padding: 20px 40px 40px 40px;border-radius: 5px;background: #fff;
 	font-family: 'Helvetica Neue', "Microsoft Yahei", "微软雅黑", "STXihei", "WenQuanYi Micro Hei", sans-serif;
-	color:888;margin:0 auto;margin-top:10%;width:400px;font-size:14px;color:#666;word-wrap: break-word;word-break: break-all;}
+	color:888;margin:0 auto;margin-top:10%;margin-bottom: 10%;width:500px;font-size:14px;color:#666;word-wrap: break-word;word-break: break-all;}
 	#msgbox #info{margin-top: 10px;color:#aaa;font-size: 12px;}
 	#msgbox #title{color: #888;border-bottom: 1px solid #ddd;padding: 10px 0;margin: 0 0 15px;font-size:18px;}
 	#msgbox #info a{color: #64b8fb;text-decoration: none;padding: 2px 0px;border-bottom: 1px solid;}
-	#msgbox a{text-decoration:none;color:#2196F3;}#msgbox a:hover{color:#f60;border-bottom:1px solid}
+	#msgbox a{text-decoration:none;color:#2196F3;}
+	#msgbox a:hover{color:#f60;border-bottom:1px solid}
 	#msgbox .desc{padding: 10px 0;color: #faad14;font-size: 13px;}
 	#msgbox pre{word-break: break-all;word-wrap: break-word;white-space: pre-wrap;
 		background: #002b36;padding:1em;color: #839496;border-left: 6px solid #8e8e8e;border-radius: 3px;}
@@ -860,12 +865,13 @@ function get_caller_info() {
 	$trace = debug_backtrace();
 	return get_caller_trace($trace);
 }
-function get_caller_msg() { 
+function get_caller_msg($trace = false) { 
 	$msg = get_caller_info();
 	$msg = array_slice($msg,0,count($msg) - 1);
-
 	$msg['memory'] = sprintf("%.3fM",memory_get_usage()/(1024*1024));
-	$msg['trace']  = think_trace('[trace]');
+	if($trace){
+		$msg['trace']  = think_trace('[trace]');
+	}
 	$msg = json_encode_force($msg);
 	$msg = str_replace(array('\\/','\/','\\\\/','\"'),array('/','/','/','"'),$msg);
 	return $msg;
@@ -997,8 +1003,15 @@ function get_class_name($obj){
  * @params {array} 返回的数据集合
  */
 function show_json($data=false,$code = true,$info=''){
-	$useTime = sprintf('%.4f',mtime() - TIME_FLOAT);
-	$result  = array('code'=>$code,'useTime'=>$useTime,'data'=>$data);
+	if(!isset($GLOBALS['showJsonTimeStart'])){
+		$GLOBALS['showJsonTimeStart'] = TIME_FLOAT;
+	}
+	$result  = array(
+		'code'		=> $code,
+		'timeUse'	=> sprintf('%.4f',mtime() - $GLOBALS['showJsonTimeStart']),
+		'timeNow'	=> sprintf('%.4f',mtime()),
+		'data'	 	=> $data
+	);
 	if ($info != '') {
 		$result['info'] = $info;
 	}
@@ -1011,7 +1024,6 @@ function show_json($data=false,$code = true,$info=''){
 		return;
 	}
 
-	check_abort();
 	if(defined("GLOBAL_DEBUG") && GLOBAL_DEBUG==1){
 		$result['memory'] = sprintf("%.3fM",memory_get_usage()/(1024*1024));
 		$result['call']   = get_caller_info();
@@ -1026,6 +1038,8 @@ function show_json($data=false,$code = true,$info=''){
 	if(is_array($temp)){
 		$result = $temp;
 	}
+
+	check_abort(); // hook之后检测处理; task缓存保持;
 	$json = json_encode_force($result);
 	if( isset($_GET['callback']) && $GLOBALS['config']['jsonpAllow'] ){
 		if(!preg_match("/^[0-9a-zA-Z_.]+$/",$_GET['callback'])){
@@ -1202,6 +1216,7 @@ function pr_trace(){
 	$result['trace']  = think_trace('[trace]');
 	call_user_func('pr',$result);
 }
+function pr_trace_exit(){pr_trace();exit;}
 
 function pr(){
 	ob_start();

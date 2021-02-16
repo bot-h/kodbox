@@ -53,15 +53,14 @@ class explorerList extends Controller{
 		$pathParse= KodIO::parse($path);
 		$this->parseAuth($data,$path);
 		$this->checkExist($data,$pathParse);
-		$this->pageParse($data);
+		$this->pageParse($data,$pathParse);
 		$this->parseDataHidden($data);
-
-		Action('explorer.recycleDriver')->appendList($data,$pathParse); //回收站追加物理/io回收站;
-		Action('explorer.listGroup')->groupChildAppend($data);
-		Action('explorer.fav')->favAppend($data);
-		Action('explorer.userShare')->shareDriverAppend($data);
-		Action('explorer.listDriver')->driverAppend($data);
-		Action('explorer.listDriver')->folderChildrenAppend($data,$pathParse);
+		
+		//回收站追加物理/io回收站;
+		Action('explorer.recycleDriver')->appendList($data,$pathParse); 
+		Action('explorer.listGroup')->appendChildren($data);
+		
+		$this->pathListParse($data);
 		$this->pageReset($data);
 	}	
 	
@@ -144,6 +143,7 @@ class explorerList extends Controller{
 			'targetID'		=> USER_ID,
 			'isFolder'		=> 0,
 			'isDelete'		=> 0,
+			'createTime'	=> array('>',time() - 3600*24*60),//2个月内;
 			'size'			=> array('>',0),
 		);
 
@@ -304,19 +304,56 @@ class explorerList extends Controller{
 			}else if($info['type'] == KodIO::KOD_SEARCH){
 			}
 		}
-		$current = $this->pathInfoParse($current);
 		$current['path'] = $path;
 		return $current;
 	}
 	
-	public function pathInfoParse($pathInfo){
-		$pathInfo = Action('explorer.fav')->favAppendItem($pathInfo);
-		$pathInfo = Action('explorer.userShare')->shareAppendItem($pathInfo);
-		$pathInfo = Action('explorer.listDriver')->parsePathIO($pathInfo);
-		$pathInfo['pathDisplay'] = $pathInfo['pathDisplay']? $pathInfo['pathDisplay']: $pathInfo['path'];
-		return $pathInfo;
+	
+	public function pathListParse(&$data){
+		$timeNow = timeFloat();
+		$timeMax = 1.5;
+		$infoFull= true;
+		$data['current'] = $this->pathInfoParse($data['current'],$data['current']);
+		foreach ($data as $type =>$list) {
+			if(!in_array($type,array('fileList','folderList','groupList'))) continue;
+			foreach ($list as $key=>$item){
+				if(timeFloat() - $timeNow >= $timeMax){$infoFull = false;}
+				$data[$type][$key] = $this->pathInfoParse($item,$data['current'],$infoFull);
+			}
+		}
 	}
 	
+	public function pathInfoParse($pathInfo,$current=false,$infoFull=true){
+		$pathInfo = Action('explorer.fav')->favAppendItem($pathInfo);
+		$pathInfo = Action('explorer.userShare')->shareAppendItem($pathInfo);
+		$pathInfo = Action('explorer.listDriver')->parsePathIO($pathInfo,$current);
+		$pathInfo = Action('explorer.listDriver')->parsePathChildren($pathInfo,$current);
+		$pathInfo['pathDisplay'] = $pathInfo['pathDisplay']? $pathInfo['pathDisplay']: $pathInfo['path'];	
+
+		// 下载权限处理;
+		$pathInfo['canDownload'] = true;
+		if(isset($pathInfo['auth'])){
+			$authValue = $pathInfo['auth']['authValue'];
+			$pathInfo['canDownload'] = Model('Auth')->authCheckDownload($authValue);
+		}
+		if($pathInfo['type'] == 'file' && $infoFull){
+			$pathInfo = $this->pathParseOexe($pathInfo);
+			$pathInfo = $this->pathInfoMore($pathInfo);
+		}
+		// 没有下载权限,不显示fileInfo信息;
+		if(isset($pathInfo['fileInfo']) && !$pathInfo['canDownload']){
+			unset($pathInfo['fileInfo']);
+			unset($pathInfo['hashMd5']);
+		}
+		if(isset($pathInfo['fileID'])){
+			unset($pathInfo['fileID']);
+		}
+		if(isset($pathInfo['fileInfo']['path'])){
+			unset($pathInfo['fileInfo']['path']);
+		}
+		$pathInfo = Hook::filter('explorer.list.itemParse',$pathInfo);
+		return $pathInfo;
+	}
 
 	/**
 	 * 递归处理数据；自动加入打开等信息
@@ -344,7 +381,6 @@ class explorerList extends Controller{
 			$item['type'] = isset($item['type']) ? $item['type'] : 'folder';
 		}
 		//$item['auth']['authValue']=0; 权限检测 
-		$this->dataParseOexe($data['fileList']);
 		$data['fileList']   = $this->dataFilterAuth($data['fileList']);
 		$data['folderList'] = $this->dataFilterAuth($data['folderList']);
 	}
@@ -355,6 +391,9 @@ class explorerList extends Controller{
 		$pathHidden = Model('SystemOption')->get('pathHidden');
 		$pathHidden = explode(',',$pathHidden);
 		$hideNumber = 0;
+		
+		$parse = KodIO::parse($data['current']['path']);
+		if($parse['type'] == KodIO::KOD_USER_SHARE_TO_ME) return;
 		foreach ($data as $type =>$list) {
 			if(!in_array($type,array('fileList','folderList'))) continue;
 			$result = array();
@@ -402,28 +441,60 @@ class explorerList extends Controller{
 		}
 		return array_values($list);
 	}
+
+	// 文件详细信息处理;
+	public function pathInfoMore($pathInfo){
+		//return $pathInfo;
+		$infoKey  = 'fileInfoMore';
+		$cacheKey = 'fileInfo.'.md5($pathInfo['path'].'@'.$pathInfo['size'].$pathInfo['modifyTime']);
+		// unset($pathInfo[$infoKey]);Cache::remove($cacheKey); //不使用缓存;
+		
+		if(isset($pathInfo[$infoKey])){
+		}else if(isset($pathInfo['sourceID'])){
+			$fileID = _get($pathInfo,'fileInfo.fileID');
+			GetInfo::infoAdd($pathInfo);
+			if($fileID && is_array($pathInfo[$infoKey])){
+				$value = json_encode($pathInfo[$infoKey]);
+				Model("File")->metaSet($fileID,$infoKey,$value);
+			}
+		}else{ // 本地存储, io存储;
+			$infoMore = Cache::get($cacheKey);
+			if(is_array($infoMore)){
+				$pathInfo[$infoKey] = $infoMore;
+			}else{
+				GetInfo::infoAdd($pathInfo);
+				if(is_array($pathInfo[$infoKey])){
+					Cache::set($cacheKey,$pathInfo[$infoKey],3600*24*20);
+				}
+			}
+		}
+		// 文件封面;
+		if(isset($pathInfo[$infoKey]) && isset($pathInfo[$infoKey]['fileThumb']) ){
+			$fileThumb = $pathInfo[$infoKey]['fileThumb'];
+			unset($pathInfo[$infoKey]['fileThumb']);
+			$pathInfo['fileThumb'] = Action('explorer.share')->linkFile($fileThumb);
+		}
+		return $pathInfo;
+	}
 	
 	/**
 	 * 追加应用内容信息;
-	 * 限制处理个数； 处理速度: 20ms/个 
 	 */
-	private function dataParseOexe(&$list){
+	private function pathParseOexe($pathInfo){
 		$maxSize = 1024*1024*2;
-		$index = 0;
-		$maxLoad = 50;	//获取内容上限；
-		if(count($list) >= 100){ //当列表过多时，获取少量应用内容；
-			$maxLoad = 5;
-		}
-		foreach ($list as &$item) {
-			if( $item['ext'] != 'oexe' || $item['size'] > $maxSize){
-				continue;
-			}
-			if($index++ >= $maxLoad) break;
-			$content = IO::getContent($item['path']);
-			$item['oexeContent'] = json_decode($content,true);
-		}
-	}
+		if($pathInfo['ext'] != 'oexe' || $pathInfo['size'] > $maxSize) return $pathInfo;
 
+		$content = IO::getContent($pathInfo['path']);
+		$pathInfo['oexeContent'] = json_decode($content,true);
+		if( $pathInfo['oexeContent']['type'] == 'path' && 
+			isset($pathInfo['oexeContent']['value']) ){
+			$linkPath = $pathInfo['oexeContent']['value'];
+			if(Action('explorer.auth')->fileCan($linkPath,'show')){
+				$pathInfo['oexeSourceInfo'] = IO::info($linkPath);
+			}
+		}
+		return $pathInfo;
+	}
 	/**
 	 * 根数据块
 	 */

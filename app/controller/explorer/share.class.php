@@ -44,14 +44,20 @@ class explorerShare extends Controller{
 		if(!$path || !$info = IO::info($path)) return;
 		$pass = Model('SystemOption')->get('systemPassword');
 		$hash = Mcrypt::encode($info['path'],$pass);
-		return APP_HOST . "index.php?explorer/share/file&hash={$hash}&name=".rawurlencode($info['name']);
+		return app_host_get()."explorer/share/file&hash={$hash}&name=".rawurlencode($info['name']);
 	}
+	public function linkFile($file){
+		$pass = Model('SystemOption')->get('systemPassword');
+		$hash = Mcrypt::encode($file,$pass,false,'kodcloud');
+		return app_host_get()."explorer/share/file&hash={$hash}";
+	}
+	
 	public function linkOut($path,$token=false){
 		$parse  = KodIO::parse($path);
 		if($parse['type'] == KodIO::KOD_SHARE_LINK){
-			$url = APP_HOST . "index.php?explorer/share/fileOut&path=".rawurlencode($path);
+			$url = app_host_get() . "explorer/share/fileOut&path=".rawurlencode($path);
 		}else{
-			$url = APP_HOST . "index.php?explorer/index/fileOut&path=".rawurlencode($path);
+			$url = app_host_get() . "explorer/index/fileOut&path=".rawurlencode($path);
 		}
 		if($token) $url .= '&accessToken='.Action('user.index')->accessToken();
 		return $url;

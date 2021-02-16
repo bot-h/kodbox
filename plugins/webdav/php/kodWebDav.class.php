@@ -111,12 +111,20 @@ class kodWebDav extends HttpDavServer {
 			return array('fileList'=>array($info));
 		}
 		
-		$GLOBALS['in']['pageNum'] = -1;// 分页大小处理--不分页;
-		// show_json(Action('explorer.list')->path($path));
+		$pathParse = KodIO::parse($path);
+		// 分页大小处理--不分页; 搜索结果除外;
+		if($pathParse['type'] != KodIO::KOD_SEARCH){
+			$GLOBALS['in']['pageNum'] = -1;
+		}
+		// write_log([$path,$pathParse,$GLOBALS['in']],'test');		
 		return Action('explorer.list')->path($path);
 	}
 	
 	public function pathMkdir($path){
+		if(!$path){ //收藏夹下的文件夹;
+			$inPath  = $this->pathGet();
+			$path = $this->parsePath(IO::pathFather($inPath)).'/'.IO::pathThis($inPath);
+		}
 		if(!$this->can($path,'edit')) return false;
 		return IO::mkdir($path);
 	}
@@ -145,6 +153,10 @@ class kodWebDav extends HttpDavServer {
 	}	
 	
 	public function pathPut($path,$localFile=''){
+		if(!$path){ //收藏夹下的文件夹;
+			$inPath  = $this->pathGet();
+			$path = $this->parsePath(IO::pathFather($inPath)).'/'.IO::pathThis($inPath);
+		}
 		$info = IO::infoFull($path);
 		if($info){	// 文件已存在; 则使用文件父目录追加文件名;
 			$name 		= IO::pathThis($this->pathGet());

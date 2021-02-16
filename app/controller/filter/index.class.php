@@ -14,10 +14,14 @@ class filterIndex extends Controller{
 		parent::__construct();
 	}
 	public function init(){
+		Action("filter.userRequest")->bind();
+		Action("filter.userCheck")->bind();
 		Action("filter.attachment")->bind();
 		Action("filter.html")->bind();
+		
 		Action("filter.post")->check();
 		Action("filter.userGroup")->check();
+		Action("filter.limit")->check();
 		Hook::trigger(strtolower(ACTION).'.before',array());
 		Hook::bind('show_json',array($this,'eventAfter'));
 	}

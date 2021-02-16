@@ -106,4 +106,29 @@ class adminRepair extends Controller {
 			$task->update(1);
 		}
 	}
+	
+	/**
+	 * source表中异常数据处理: 
+	 * 1. parentID为0, 但 parentLevel不为0情况处理;
+	 * 2. parentID 不存在处理;
+	 */
+	public function sourceEmptyClear(){
+		$modelSource = Model("Source");
+		$list = $modelSource->select();
+		$listArr = array_to_keyvalue($list,'sourceID');
+		$notExist = 0;
+		http_close();
+		
+		$task = new Task("sourceEmptyClearCheck",'',count($list));
+		foreach ($list as $item) {
+			if( ($item['parentID'] !=0   && !isset($listArr[$item['parentID']]) ) ||
+				($item['parentID']) == 0 && $item['parentLevel'] != ',0,'
+			){
+				$notExist ++;
+				$modelSource->remove($item['sourceID']);
+				write_log($item,'sourceEmptyClear');
+			}
+			$task->update(1);
+		}
+	}
 }

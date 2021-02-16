@@ -134,7 +134,6 @@ class explorerAttachment extends Controller{
 			//url解析替换;
 			if($imageParse['linkNew'] && $imageSrc != $imageParse['linkNew']){
 				$replace[$imageHtml] = str_replace($imageSrc,$imageParse['linkNew'],$imageHtml);
-				// var_dump([$replace,$imageHtml,$imageSrc,$imageParse]);
 			}
 		}
 		$sourceArr  = array_unique($sourceArr);

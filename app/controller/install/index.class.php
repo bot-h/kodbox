@@ -3,7 +3,6 @@
 /**
  * 初始化项目基础数据
  * 需先创建数据库，建表，并配置好config/setting_user.php
- * server/index.php?install/index/index
  */
 class installIndex extends Controller {
     public $roleID;
@@ -45,7 +44,7 @@ class installIndex extends Controller {
                 "kod"	=> array(
                     'systemOS'		=> $this->config['systemOS'],
                     'phpVersion'	=> PHP_VERSION,
-                    'appApi'		=> rtrim(APP_HOST,'/').'/index.php?',
+                    'appApi'		=> APP_HOST.'/index.php?',
                     'APP_HOST'		=> APP_HOST,
                     'ENV_DEV'		=> !!STATIC_DEV,
                     'staticPath'	=> STATIC_PATH,
@@ -250,7 +249,7 @@ class installIndex extends Controller {
         // 判断所需缓存配置是否有效——redis、memcached
         if(in_array($cacheType, array('redis', 'memcached'))){
             if(!extension_loaded($cacheType)){
-                show_json(sprintf(LNG('common.env.invalidExt'), "php-[{$cacheType}]"), false);
+                show_json(sprintf(LNG('common.env.invalidExt'), "[php-{$cacheType}]"), false);
             }
             $type = ucfirst($cacheType);
             $handle = new $type();
@@ -314,7 +313,7 @@ class installIndex extends Controller {
         if(!@file_exists($file)) @touch($file);
         $content = file_get_contents($file);
 		$pre = '';
-		if(stripos(trim($content),"<?php") > -1) {
+		if(stripos(trim($content),"<?php") !== false) {
             $pre = PHP_EOL;
             unset($text[0]);
         }

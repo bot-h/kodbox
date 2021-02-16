@@ -35,7 +35,8 @@ class userRegist extends Controller {
 			show_json(LNG('common.invalidRequest'), false);
 		}
 		if (!Input::check($data['input'], $data['type'])) {
-			show_json(LNG('common.invalid') . LNG('common.' . $data['type']), false);
+			$type = $data['type'] . ($data['type'] == 'phone' ? 'Number' : '');
+			show_json(LNG('common.invalid') . LNG('common.' . $type), false);
 		}
 		if (Session::get('checkCode') != $data['checkCode']) {
 			show_json(LNG('user.codeError'), false);
@@ -52,7 +53,7 @@ class userRegist extends Controller {
 
 		// 2.发送邮件/短信
 		$func = $data['type'] == 'email' ? 'sendEmail' : 'sendSms';
-		$res = Action('user.bind')->$func("{$data['type']}_{$data['source']}", $data['input']);
+		$res = Action('user.bind')->$func($data['input'], "{$data['type']}_{$data['source']}");
 		if (!$res['code']) {
 			show_json(LNG('user.sendFail') . ': ' . $res['data'], false);
 		}
@@ -97,9 +98,13 @@ class userRegist extends Controller {
 		if (empty($userInfo)) {
 			show_json(LNG('common.illegalRequest'), false);
 		}
+		$type = $data['type'] . ($data['type'] == 'phone' ? 'Number' : '');
+		if(!$userInfo[$data['type']]) {
+			show_json(LNG('common.' . $type) . LNG('user.notBind'), false);
+		}
 		// 提交的邮箱、手机和用户信息中的不匹配
 		if ($userInfo[$data['type']] != $data['input']) {
-			show_json(LNG('common.invalid') . LNG('common.' . $data['type']), false);
+			show_json(sprintf(LNG('user.inputNotMatch'), LNG('common.' . $type)), false);
 		}
 	}
 
@@ -127,7 +132,8 @@ class userRegist extends Controller {
 		}
 		// 邮箱/手机号校验
 		if (!Input::check($data['input'], $data['type'])) {
-			show_json(LNG('common.invalid') . LNG('common.' . $data['type']), false);
+			$type = $data['type'] . ($data['type'] == 'phone' ? 'Number' : '');
+			show_json(LNG('common.invalid') . LNG('common.' . $type), false);
 		}
 		// 消息验证码校验
 		if(!$msgCode = Input::get('msgCode')){
@@ -143,8 +149,8 @@ class userRegist extends Controller {
 		$salt = Input::get('salt',null, 0);
 		$password = $salt == 1 ? Action('user.setting')->decodePwd($data['password']) : $data['password'];
 		$data['password'] = rawurldecode($password);
-		if( !ActionCall('user.check.password',$data['password']) ){
-			return ActionCall('user.check.passwordTips');
+		if( !ActionCall('filter.userCheck.password',$data['password']) ){
+			return ActionCall('filter.userCheck.passwordTips');
 		}
 		$this->addUser($data);
 	}
