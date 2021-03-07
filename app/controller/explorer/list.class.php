@@ -66,7 +66,7 @@ class explorerList extends Controller{
 	
 	// 桌面文件夹自动检测;不存在处理;
 	private function checkDesktop($path){
-		if($path !== MY_DESKTOP) return $path;
+		if(trim($path,'/') !== trim(MY_DESKTOP,'/')) return $path;
 		if(IO::info($path)) return MY_DESKTOP;//存在则不处理;
 		
 		$desktopName = LNG('explorer.toolbar.desktop');
@@ -328,7 +328,7 @@ class explorerList extends Controller{
 		$pathInfo = Action('explorer.userShare')->shareAppendItem($pathInfo);
 		$pathInfo = Action('explorer.listDriver')->parsePathIO($pathInfo,$current);
 		$pathInfo = Action('explorer.listDriver')->parsePathChildren($pathInfo,$current);
-		$pathInfo['pathDisplay'] = $pathInfo['pathDisplay']? $pathInfo['pathDisplay']: $pathInfo['path'];	
+		$pathInfo['pathDisplay'] = _get($pathInfo,'pathDisplay',$pathInfo['path']);
 
 		// 下载权限处理;
 		$pathInfo['canDownload'] = true;
@@ -341,7 +341,7 @@ class explorerList extends Controller{
 			$pathInfo = $this->pathInfoMore($pathInfo);
 		}
 		// 没有下载权限,不显示fileInfo信息;
-		if(isset($pathInfo['fileInfo']) && !$pathInfo['canDownload']){
+		if(!$pathInfo['canDownload']){
 			unset($pathInfo['fileInfo']);
 			unset($pathInfo['hashMd5']);
 		}
@@ -414,8 +414,8 @@ class explorerList extends Controller{
 	
 	// 用户或部门空间尺寸;
 	public function targetSpace($current){
-		if(!$current['targetID']) return false;
-		if(	$current['auth'] &&
+		if(!_get($current,'targetID')) return false;
+		if(	isset($current['auth']) &&
 			$current['auth']['authValue'] == -1 ){
 			return false;
 		}
@@ -453,7 +453,7 @@ class explorerList extends Controller{
 		}else if(isset($pathInfo['sourceID'])){
 			$fileID = _get($pathInfo,'fileInfo.fileID');
 			GetInfo::infoAdd($pathInfo);
-			if($fileID && is_array($pathInfo[$infoKey])){
+			if($fileID && is_array(_get($pathInfo,$infoKey) )){
 				$value = json_encode($pathInfo[$infoKey]);
 				Model("File")->metaSet($fileID,$infoKey,$value);
 			}
@@ -463,7 +463,7 @@ class explorerList extends Controller{
 				$pathInfo[$infoKey] = $infoMore;
 			}else{
 				GetInfo::infoAdd($pathInfo);
-				if(is_array($pathInfo[$infoKey])){
+				if(is_array(_get($pathInfo,$infoKey)) ){
 					Cache::set($cacheKey,$pathInfo[$infoKey],3600*24*20);
 				}
 			}

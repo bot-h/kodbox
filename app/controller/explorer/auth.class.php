@@ -210,7 +210,12 @@ class explorerAuth extends Controller {
 			if($shareInfo && $action == 'download' && _get($shareInfo,'option.notDownload') !='1' ) return true;
 			return $this->errorMsg(LNG('explorer.pathNotSupport'),1108);
 		}
-
+		
+		//不支持删除自己的桌面
+		if(trim($path,'/') == trim(MY_DESKTOP,'/') && $action == 'remove'){
+			return $this->errorMsg(LNG('explorer.desktopDelError'),1100);
+		}
+		
 		// 纯虚拟路径只能列表; 不支持其他任何操作;
 		if( $this->pathOnlyShow($path) ){
 			if($action == 'show') return true;

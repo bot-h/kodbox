@@ -63,6 +63,8 @@ class explorerListDriver extends Controller{
 		$parse = KodIO::parse($info['path']);
 		$storage = $driverList[$parse['id']];
 		if($storage){
+			$info['isReadable']  = true;
+			$info['isWriteable'] = true;
 			$info['ioType'] = $storage['driver'];
 			$info['pathDisplay'] = str_replace($parse['pathBase'],$storage['name'],$info['path']);
 

@@ -395,7 +395,7 @@ function array_get_value(&$array,$key,$default=null){
 	}
 	
 	$keyArr  = explode(".",$key);
-	$tempArr = &$array;
+	$tempArr = $array;
 	$total   = count($keyArr);
 	for ($i=0; $i < $total; $i++) {
 		$k = $keyArr[$i];
@@ -403,7 +403,7 @@ function array_get_value(&$array,$key,$default=null){
 		if( $i+1 == $total ){
 			return $tempArr[$k];
 		}
-		$tempArr = &$tempArr[$k];
+		$tempArr = $tempArr[$k];
 	}
 	return $default; 
 }
@@ -1029,17 +1029,17 @@ function show_json($data=false,$code = true,$info=''){
 		$result['call']   = get_caller_info();
 		$result['trace']  = think_trace('[trace]');
 	}
+	$temp = Hook::trigger("show_json",$result);
+	if(is_array($temp)){
+		$result = $temp;
+	}
+	check_abort(); // hook之后检测处理; task缓存保持;
+	
 	ob_get_clean();
 	if(!headers_sent()){
 		header("X-Powered-By: kodbox.");
 		header('Content-Type: application/json; charset=utf-8'); 
 	}
-	$temp = Hook::trigger("show_json",$result);
-	if(is_array($temp)){
-		$result = $temp;
-	}
-
-	check_abort(); // hook之后检测处理; task缓存保持;
 	$json = json_encode_force($result);
 	if( isset($_GET['callback']) && $GLOBALS['config']['jsonpAllow'] ){
 		if(!preg_match("/^[0-9a-zA-Z_.]+$/",$_GET['callback'])){

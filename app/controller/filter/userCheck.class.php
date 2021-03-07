@@ -72,8 +72,8 @@ class filterUserCheck extends Controller {
 	 */
 	private function ipCheck(){
 		$this->_checkConfig();
-		if($this->config['loginIpCheckIgnore'] == '1') return true;// 手动关闭ip白名单检测;
-		if(!$this->options['loginCheckAllow']) return true;
+		if(_get($this->config,'loginIpCheckIgnore') == '1') return true;// 手动关闭ip白名单检测;
+		if(!_get($this->options,'loginCheckAllow')) return true;
 
 		$ip  = get_client_ip();
 		$serverIP 	= gethostbyname(gethostname().'.');

@@ -843,9 +843,14 @@ class RequestCore
         set_time_limit(0);
 
         $curl_handle = $this->prep_request();
-        curl_setopt($curl_handle, CURLOPT_NOPROGRESS, false);//add by warlee;
-		curl_setopt($curl_handle, CURLOPT_PROGRESSFUNCTION,'curl_progress');curl_progress_start($curl_handle);
-		$this->response = curl_exec($curl_handle);curl_progress_end($curl_handle); 
+
+		//add by warlee;
+		$theCurl = $curl_handle;
+		curl_setopt($theCurl, CURLOPT_NOPROGRESS, false);
+		curl_setopt($theCurl, CURLOPT_PROGRESSFUNCTION,'curl_progress');
+		$theResult = curl_progress_start($theCurl);
+		if(!$theResult){$theResult = curl_exec($theCurl);curl_progress_end($theCurl,$theResult);}
+		$curl_handle = $theCurl;$this->response = $theResult;
 
         if ($this->response === false) {
             throw new RequestCore_Exception('cURL resource: ' . (string)$curl_handle . '; cURL error: ' . curl_error($curl_handle) . ' (' . curl_errno($curl_handle) . ')');

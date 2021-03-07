@@ -23,7 +23,6 @@ class userRegist extends Controller {
 	 * 发送验证码——注册、找回密码
 	 */
 	public function sendMsgCode() {
-		$this->checkAllow();
 		$data = Input::getArray(array(
 			'type'		=> array('check' => 'require'),
 			'input'		=> array('check' => 'require'),
@@ -44,6 +43,7 @@ class userRegist extends Controller {
 
 		// 1.1前端注册检测
 		if ($data['source'] == 'regist') {
+			$this->checkAllow();
 			$this->userRegistCheck($data);
 		}
 		// 1.2找回密码(前端找回、后端重置)检测
