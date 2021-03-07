@@ -979,12 +979,13 @@ function write_log($log, $type = 'default', $level = 'log'){
 	$target   = LOG_PATH . strtolower($type) . '/';
 	mk_dir($target);
 	if (!path_writeable($target)){
+		return;// 日志写入失败不处理;
 		exit('path can not write! ['.$target.']');
 	}
 	$ext = '.php';//.php .log;
 	$target .= date('Y_m_d').'__'.$level.$ext;
 	//检测日志文件大小, 超过配置大小则重命名
-	if (file_exists($target) && get_filesize($target) >= 1024*1024*10) {
+	if (file_exists($target) && get_filesize($target) >= 1024*1024*5) {
 		$fileName = substr(basename($target),0,strrpos(basename($target),$ext)).date('H:i:s').$ext;
 		@rename($target, dirname($target) .'/'. $fileName);
 	}

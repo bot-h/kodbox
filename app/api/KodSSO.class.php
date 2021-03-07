@@ -50,10 +50,11 @@ class KodSSO{
 			$res = shell_exec($command);
 		}
 		if(!$res){
-			$streamContext = stream_context_create(
-				array('http'=>array('timeout' => 2,'method'=>"GET"))
-			);
-			$res = file_get_contents($host.'?'.$uri,false,$streamContext);
+			$context = stream_context_create(array(
+				'http'	=> array('timeout' => 2,'method'=>"GET"),
+				"ssl" 	=> array("verify_peer"=>false,"verify_peer_name"=>false)
+			));
+			$res = file_get_contents($host.'?'.$uri,false,$context);
 		}
 		// var_dump(microtime(true) - $timeStart,$res);exit;
 		

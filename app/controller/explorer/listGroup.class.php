@@ -75,7 +75,7 @@ class explorerListGroup extends Controller{
 	 */
 	public function appendChildren(&$data){
 		$pathInfo = $data['current'];
-		if(!$pathInfo || $pathInfo['targetType'] != 'group') return false;
+		if(!$pathInfo || _get($pathInfo,'targetType') != 'group') return false;
 		
 		// 第一页才罗列;
 		$page = intval($this->in['page']);

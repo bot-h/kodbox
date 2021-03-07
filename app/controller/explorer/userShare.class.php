@@ -31,7 +31,7 @@ class explorerUserShare extends Controller{
 	
 	// 分享信息处理;
 	public function shareAppendItem($item){
-		$shareInfo = $item['shareInfo'];
+		$shareInfo = _get($item,'shareInfo');
 		if(!isset($item['sourceInfo'])){$item['sourceInfo'] = array();}
 		if(isset($item['sourceInfo']['shareInfo']) ) return $item;
 		
@@ -41,9 +41,9 @@ class explorerUserShare extends Controller{
 			$shareList = array_to_keyvalue($shareList,'sourcePath');
 		}
 		
-		$shareInfo = $shareInfo ? $shareInfo : $shareList[$item['path']];
-		$shareInfo = $shareInfo ? $shareInfo : $shareList[rtrim($item['path'],'/')];
-		$shareInfo = $shareInfo ? $shareInfo : $shareList[rtrim($item['path'],'/').'/'];
+		$shareInfo = $shareInfo ? $shareInfo : _get($shareList,$item['path']);
+		$shareInfo = $shareInfo ? $shareInfo : _get($shareList,rtrim($item['path'],'/'));
+		$shareInfo = $shareInfo ? $shareInfo : _get($shareList,rtrim($item['path'],'/').'/');
 		if(!$shareInfo) return $item;
 		$item['sourceInfo']['shareInfo'] = array(
 			'shareID' 		=> $shareInfo['shareID'],
@@ -255,7 +255,7 @@ class explorerUserShare extends Controller{
 		$source['shareCreateTime'] 	= $share['createTime'];
 		$source['shareModifyTime'] 	= $share['modifyTime'];
 		$source['shareID']  = $share['shareID'];
-		$sourceRoot = $share['sourceInfo'] ? $share['sourceInfo'] : $source;
+		$sourceRoot = isset($share['sourceInfo']) ? $share['sourceInfo'] : $source;
 		
 		// 物理路径,io路径;
 		$pathAdd = $source['sourceID'];

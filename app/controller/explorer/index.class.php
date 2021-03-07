@@ -32,9 +32,10 @@ class explorerIndex extends Controller{
 	}
 	private function itemInfo($item){
 		$path = $item['path'];
-		if($item['type'] == 'full'){
+		$type = _get($item,'type');
+		if($type == 'full'){
 			$result = IO::infoFull($path);
-		}else if($item['type'] == 'simple'){
+		}else if($type == 'simple'){
 			$result = IO::info($path);
 		}else{
 			$result = IO::infoWithChildren($path);
@@ -52,7 +53,7 @@ class explorerIndex extends Controller{
 		if($result['type'] != 'file') return $item;
 		
 		if( !_get($result,'fileInfo.hashMd5') && 
-			($result['size'] <= 200*1024*1024 || $this->in['getMore'])  ){
+			($result['size'] <= 200*1024*1024 || _get($this->in,'getMore') )  ){
 			$result['hashMd5'] = IO::hashMd5($result['path']);
 		}
 		$result = Action('explorer.list')->pathInfoMore($result);
@@ -229,11 +230,6 @@ class explorerIndex extends Controller{
 		$success=0;$error=0;
 		$errorMsg = LNG('explorer.removeFail');
 		foreach ($list as $val) {
-			if($val['path'] == MY_DESKTOP){
-				$error ++;
-				$errorMsg = LNG('explorer.desktopDelError');
-				continue;
-			}
 			$result = Action('explorer.recycleDriver')->removeCheck($val['path'],$toRecycle);
 			$result ? $success ++ : $error ++;
 		}
@@ -265,7 +261,7 @@ class explorerIndex extends Controller{
 
 		// 清空回收站时,重新计算大小;
 		if(isset($this->in['all']) ){
-			Model('Source')->userSelfSpaceReset();
+			Model('Source')->userSpaceReset(USER_ID);
 		}
 		show_json(LNG('explorer.success'));
 	}

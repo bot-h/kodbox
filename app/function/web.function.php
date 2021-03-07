@@ -198,13 +198,24 @@ function parse_headers($raw_headers){
 
 $GLOBALS['curlKodLastTime'] = 0; // 间隔100ms;
 $GLOBALS['curlKodLast'] = false;
-function curl_progress_start($curl){
+
+$GLOBALS['curlCache'] = array();
+$GLOBALS['curlCacheResult'] = array();
+function curl_progress_start(&$curl){
 	$GLOBALS['curlKodLastTime'] = 0;
 	$GLOBALS['curlKodLast'] = $curl;
 	Hook::trigger('curl.progressStart',$curl);
 	think_status('curlTimeStart');
+
+	// 内存缓存;
+	// $curlInfo = curl_getinfo($curl);
+	// if(isset($GLOBALS['curlCache'][$curlInfo['url']])){
+	// 	write_log($curlInfo);
+	// 	$curl = curl_copy_handle($GLOBALS['curlCache'][$curlInfo['url']]);
+	// 	return $GLOBALS['curlCacheResult'][$curlInfo['url']];
+	// }
 }
-function curl_progress_end($curl){
+function curl_progress_end($curl,$curlResult=false){
 	$GLOBALS['curlKodLastTime'] = 0;
 	$GLOBALS['curlKodLast'] = false;
 	Hook::trigger('curl.progressEnd',$curl);
@@ -215,6 +226,18 @@ function curl_progress_end($curl){
 	$runTime = '[ RunTime:'.think_status('curlTimeStart','curlTimeEnd',6).'s ]';
 	$runInfo = "sizeUp={$curlInfo['size_upload']};sizeDown={$curlInfo['download_content_length']};";//json_encode($curlInfo)
 	think_trace(" ".$curlInfo['url'].";".$runInfo.$runTime,'','CURL');
+
+	// 缓存处理;
+	if($curlResult){
+		// if(count($GLOBALS['curlCache']) > 50){
+		// 	$GLOBALS['curlCacheResult'] = null;
+		// 	$GLOBALS['curlCacheResult'] = array();
+		// 	$GLOBALS['curlCache'] = null;
+		// 	$GLOBALS['curlCache'] = array();
+		// }
+		// $GLOBALS['curlCacheResult'][$curlInfo['url']] = $curlResult;
+		// $GLOBALS['curlCache'][$curlInfo['url']] = curl_copy_handle($curl);
+	}
 }
 function curl_progress(){
 	$args = func_get_args();
@@ -388,15 +411,6 @@ function url_request($url,$method='GET',$data=false,$headers=false,$options=fals
 			$http_body = $data;
 		}
 	}
-	if($method == 'DOWNLOAD'){
-		@fclose($fp);
-		@clearstatcache();
-		if($success){
-			move_path($downTemp,$data);
-		}
-		@unlink($downTemp);
-	}
-
 	$return = array(
 		'data'		=> $http_body,
 		'status'	=> $success,
