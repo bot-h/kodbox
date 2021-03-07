@@ -172,7 +172,8 @@
                 }
                 var delay = null;
                 if(!result.code || (result.info && result.info == '10000')) delay = 5000;
-                Tips.close(result.data, result.code, delay);
+                var msg = result.data || (LNG['explorer.error']+'!<br>'+lng.path_write);
+                Tips.close(msg, result.code, delay);
                 if(!result.code) return;
                 stepNext(_this, 2);
             }, function(){
@@ -209,7 +210,8 @@
         request('install/index/save', data, function(result){
             tips.close();
             var delay = !result.code ? 5000 : null;
-            Tips.close(result.data, result.code, delay);
+            var msg = result.data || (LNG['explorer.error']+'!<br>'+lng.path_write);
+            Tips.close(msg, result.code, delay);
             if(!result.code) return;
             stepNext(_this, 2);
         }, function(){
@@ -252,7 +254,8 @@
             request('install/index/save', data, function(result){
                 tips.close();
                 var delay = !result.code ? 5000 : null;
-                Tips.close(result.data, result.code, delay);
+                var msg = result.data || (LNG['explorer.error']+'!<br>'+lng.path_write);
+                Tips.close(msg, result.code, delay);
                 if(!result.code) return;
                 // 显示admin账号密码
                 name = data.name;

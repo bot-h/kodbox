@@ -62,27 +62,28 @@ class explorerListDriver extends Controller{
 		
 		$parse = KodIO::parse($info['path']);
 		$storage = $driverList[$parse['id']];
-		if($storage){
-			$info['isReadable']  = true;
-			$info['isWriteable'] = true;
-			$info['ioType'] = $storage['driver'];
-			$info['pathDisplay'] = str_replace($parse['pathBase'],$storage['name'],$info['path']);
+		if(!$storage) return $info;
 
-			// 根目录;
-			if( !trim($parse['param'],'/') || $isFavPath ){
-				if(!$info['sourceInfo']['favName']){
-					$info['name'] = $storage['name'];
-				}
-				$info['icon'] = 'io-'.strtolower($storage['driver']);
-				if(isset($storage['config']['domain'])){
-					$info['ioDomain'] = $storage['config']['domain'];
-				}
-				if(isset($storage['config']['bucket'])){
-					$info['ioBucket'] = $storage['config']['bucket'];
-				}
-				if(isset($storage['config']['basePath'])){
-					$info['ioBasePath'] = $storage['config']['basePath'];
-				}
+		$info['isReadable']  = true;
+		$info['isWriteable'] = true;
+		$info['ioType'] = $storage['driver'];
+		$info['pathDisplay'] = str_replace($parse['pathBase'],$storage['name'],$info['path']);
+
+		// 根目录;
+		if( !trim($parse['param'],'/') || $isFavPath ){
+			$info['name'] = $storage['name'];
+			if($isFavPath){
+			    $info['name'] = $info['sourceInfo']['favName'];
+			}
+			$info['icon'] = 'io-'.strtolower($storage['driver']);
+			if(isset($storage['config']['domain'])){
+				$info['ioDomain'] = $storage['config']['domain'];
+			}
+			if(isset($storage['config']['bucket'])){
+				$info['ioBucket'] = $storage['config']['bucket'];
+			}
+			if(isset($storage['config']['basePath'])){
+				$info['ioBasePath'] = $storage['config']['basePath'];
 			}
 		}
 		// pr($storage,$parse,$info,$driverList);exit;

@@ -1145,7 +1145,7 @@ function html2txt($document){
 function match_text($content, $preg){
 	$preg = "/" . $preg . "/isU";
 	preg_match($preg, $content, $result);
-	return $result[1];
+	return is_array($result) ? $result[1]:false;
 } 
 // 获取内容,获取一个页面若干信息.结果在 1,2,3……中
 function match_all($content, $preg){

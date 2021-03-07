@@ -44,7 +44,7 @@ class explorerIndex extends Controller{
 		if( $result['type'] == 'file' && Action('explorer.auth')->fileCanRead($path)){
 			$result['downloadPath'] = Action('explorer.share')->link($path);
 		}
-		$result = Action('explorer.list')->pathInfoParse($result,false,false);
+		$result = Action('explorer.list')->pathInfoParse($result,0,0);
 		return $result;
 	}
 
@@ -259,8 +259,12 @@ class explorerIndex extends Controller{
 		Model('SourceRecycle')->remove($sourceArr);
 		Action('explorer.recycleDriver')->remove($pathArr);
 
-		// 清空回收站时,重新计算大小;
-		if(isset($this->in['all']) ){
+		// 清空回收站时,重新计算大小; 一小时内不再处理;
+		$cacheKey = 'autoReset_'.USER_ID;
+		if(isset($this->in['all']) && time() - intval(Cache::get($cacheKey)) > 60 * 5 ){
+			Cache::set($cacheKey,time());
+			$USER_HOME = KodIO::sourceID(MY_HOME);
+			Model('Source')->folderSizeResetChildren($USER_HOME);
 			Model('Source')->userSpaceReset(USER_ID);
 		}
 		show_json(LNG('explorer.success'));
@@ -587,10 +591,10 @@ class explorerIndex extends Controller{
 		// 拼接转换相对路径;
 		$io = IO::init($this->in['path']);
 		$parent = $io->getPathOuter($io->pathFather($io->path));
-		$find   = $parent.'/'.$this->in['add'];
+		$find   = $parent.'/'.rawurldecode($this->in['add']); //支持中文空格路径等;
 		$find   = KodIO::clear(str_replace('./','/',$find));
 		$info   = IO::infoFull($find);
-		// pr($parent,$find,$info,IO::info($this->in['path']));exit;
+		// pr($parent,$this->in,$find,$info,IO::info($this->in['path']));exit;
 		if(!$info || $info['type'] != 'file'){
 			return show_json(LNG('common.pathNotExists'),false);
 		}

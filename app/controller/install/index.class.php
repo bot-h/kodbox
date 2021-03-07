@@ -200,7 +200,7 @@ class installIndex extends Controller {
             if(!path_writeable($value)) $pathWrt = false;
             break;
         }
-        $env['path_writable'] = $pathWrt || rtrim(BASIC_PATH, '/');
+        $env['path_writable'] = $pathWrt ? $pathWrt : rtrim(BASIC_PATH, '/');
         show_json($env);
     }
 
@@ -231,6 +231,7 @@ class installIndex extends Controller {
         // 1.2 连接数据库
         // 如果用include引入配置文件，$config的值会是上次请求的（？），所以直接用$data赋值
         $GLOBALS['config']['database'] = $data;
+        
         // $GLOBALS['config']['cache']['sessionType'] = $cacheType;
         // $GLOBALS['config']['cache']['cacheType'] = $cacheType;
         think_config($GLOBALS['config']['databaseDefault']);
@@ -239,8 +240,9 @@ class installIndex extends Controller {
         Cache::initReset();
         Cache::remove($this->dbWasSet);
         if($this->dbType == 'mysql'){
-            $data['DB_NAME'] = '';  // mysql连接，先不指定数据库，配置错误时会报错
-            think_config($data);
+            // mysql连接，先不指定数据库，配置错误时会报错
+            $GLOBALS['config']['database']['DB_NAME'] = '';
+            think_config($GLOBALS['config']['database']);
             $db = Model()->db();
             $dbexist = $db->execute("show databases like '{$dbName}'");
         }

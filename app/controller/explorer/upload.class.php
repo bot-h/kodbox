@@ -50,6 +50,17 @@ class explorerUpload extends Controller{
 		$repeat = Model('UserOption')->get('fileRepeat');
 		$repeat = isset($this->in['repeatType']) ? $this->in['repeatType'] : $repeat;
 		
+		// 文件保存; 必须已经先存在;
+		if($this->in['uploadType'] == 'fileSave'){
+			$repeat = REPEAT_REPLACE;
+			$info   = IO::info($this->in['path']);
+			if(!$info){
+				show_json(LNG("common.pathNotExists"),false);
+			}
+			// 重新构造路径 父目录+文件名;
+			$savePath = rtrim(IO::pathFather($info['path']),'/').'/'.$info['name'];
+		}
+		
 		// 第三方存储上传完成
 		if( isset($this->in['uploadLinkSuccess']) ){
 			$this->fileUploadByClient($savePath,$repeat);
@@ -70,7 +81,7 @@ class explorerUpload extends Controller{
 		}
 	}
 	private function uploadInfo($path){
-		if(!$GLOBALS['UPLOAD_ATTACHMENT']) return $path;
+		if($this->in['uploadType'] != 'fileInfo') return $path;
 		$info = IO::info($path);
 		$info = array_field_key($info,array("ext",'name','createTime','size'));
 		$info['link'] = Action('explorer.share')->link($path);

@@ -33,7 +33,8 @@ class explorerList extends Controller{
 			case KodIO::KOD_USER_RECENT:		$data = $this->listRecent();break;
 			case KodIO::KOD_GROUP_ROOT_SELF:	$data = Action('explorer.listGroup')->groupSelf($pathParse);break;
 			case KodIO::KOD_USER_SHARE:			$data = Action('explorer.userShare')->myShare('to');break;
-			case KodIO::KOD_USER_SHARE_LINK:	$data = Action('explorer.userShare')->myShare('link');break;			
+			case KodIO::KOD_USER_SHARE_LINK:	$data = Action('explorer.userShare')->myShare('link');break;
+			
 			case KodIO::KOD_USER_SHARE_TO_ME:	$data = Action('explorer.userShare')->shareToMe($id);break;
 			case KodIO::KOD_SHARE_ITEM:			$data = Action('explorer.userShare')->sharePathList($pathParse);break;
 			case KodIO::KOD_SHARE_LINK:			$data = Action('explorer.share')->pathList();break;
