@@ -258,7 +258,7 @@ class explorerShare extends Controller{
 
 	//输出文件
 	public function fileOut(){
-		$path = $this->in['path'];
+		$path = rawurldecode($this->in['path']);//允许中文空格等;
 		if(request_url_safe($path)) {
 			header('Location:' . $path);exit;
 		} 
@@ -277,6 +277,7 @@ class explorerShare extends Controller{
 	}
 	public function fileGet(){
 		$this->in['path'] = $this->parsePath($this->in['path']);
+		$this->in['pageNum'] = 1024 * 1024 * 10;
 		$result = ActionCallHook("explorer.editor.fileGet");
 		if($result['code']){
 			$result['data'] = $this->itemInfo($result['data']);
@@ -385,7 +386,7 @@ class explorerShare extends Controller{
 		$field = array(
 			'name','path','type','size','ext',
 			'createUser','modifyUser','createTime','modifyTime','sourceID',
-			'hasFolder','hasFile','children','targetType','targetID',			
+			'hasFolder','hasFile','children','targetType','targetID','pageInfo',
 			'base64','content','charset','oexeContent',
 		);
 		$theItem = array_field_key($item,$field);

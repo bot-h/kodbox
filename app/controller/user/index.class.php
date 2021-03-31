@@ -28,10 +28,11 @@ class userIndex extends Controller {
 		$this->initSetting();   // 
 		init_check_update();	// 升级检测处理;
 		
-		$this->loginCheck();    //session读取写入
-		Action('filter.index')->init();
+		Action('filter.index')->bind();
+		$this->loginCheck();
 		KodIO::initSystemPath();
 		Model('Plugin')->init();
+		Action('filter.index')->trigger();
 	}
 	
 	public function checkUrl(){

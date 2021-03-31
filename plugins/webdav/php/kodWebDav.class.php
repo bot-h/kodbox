@@ -29,8 +29,8 @@ class kodWebDav extends HttpDavServer {
 		$userInfo = Session::get("kodUser");
 	    if(!$userInfo || !is_array($userInfo)){
     	    $user = HttpAuth::get();
-    	    $this->plugin->log($user);
     		$find = ActionCall('user.index.userInfo', $user['user'],$user['pass']);
+			$this->plugin->log(array($user,$find));
     		if ( !is_array($find) || !isset($find['userID']) ){
     			return HttpAuth::error();
     		}
@@ -65,6 +65,7 @@ class kodWebDav extends HttpDavServer {
 		$pathAppend = implode('/',array_slice($pathArr,1));
 		$newPath = KodIO::clear($item['path'].'/'.$pathAppend);
 		$info = IO::infoFull($newPath);
+		// pr($newPath,$item,$pathArr,$info,count($parent['folderList']));
 		if($info) return $info['path'];
 
 		$parent = Action('explorer.list')->path($item['path']);

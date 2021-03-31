@@ -78,7 +78,13 @@ class getid3_jpg extends getid3_handler
 								}
 								$this->warning('Error parsing EXIF data ('.$errstr.')');
 							});
-							$info['jpg']['exif'] = exif_read_data($info['filenamepath'], null, true, false);
+							
+							// change by warlee; exif_read_data 读取streamwrapper的文件会异常;
+							// 参考: https://github.com/avalanche123/Imagine/issues/728
+							$fileStr  = StreamWrapperIO::read($info['filenamepath'],0,1024*64);
+							$filePath = 'data://image/jpeg;base64,'.base64_encode($fileStr);
+							$info['jpg']['exif'] = exif_read_data($filePath, null, true, false);
+							// $info['jpg']['exif'] = exif_read_data($info['filenamepath'], null, true, false);
 							restore_error_handler();
 						} else {
 							$this->warning('exif_read_data() cannot parse non-EXIF data in APP1 (expected "Exif", found "'.substr($imageinfo['APP1'], 0, 4).'")');
