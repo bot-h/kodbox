@@ -14,7 +14,7 @@ class explorerListDriver extends Controller{
 	 * 用户存储挂载列表
 	 */
 	public function get(){
-		if($GLOBALS['isRoot']) return $this->rootList();
+		if(_get($GLOBALS,'isRoot')) return $this->rootList();
 		return false;//普通用户挂载暂不支持;
 	}
 	
@@ -94,7 +94,7 @@ class explorerListDriver extends Controller{
 		$ioAllow = array('Local','MinIO');// 'Local','MinIO'
 		$pathParse = KodIO::parse($current['path']);
 		$isLocal = $pathParse['type'] ? false:true;
-		$isIoAllow = in_array($current['ioType'],$ioAllow);
+		$isIoAllow = isset($current['ioType']) && in_array($current['ioType'],$ioAllow);
 		if($pathParse['type'] == KodIO::KOD_BLOCK && $pathParse['id'] != 'driver') return $info;
 
 		$infoMore = array('hasFolder'=>true,'hasFile'=> true);
@@ -103,11 +103,18 @@ class explorerListDriver extends Controller{
 		}else if($pathParse['type'] == KodIO::KOD_USER_FAV){
 			$itemParse = KodIO::parse($info['path']);
 			if(!$itemParse['type']){
-				$infoMore = IO::has($info['path'],1);
+				$infoPath = IO::info($info['path']);
+				if(!$infoPath){
+					$infoMore = array('exists'=>false);
+				}else{
+					$infoMore = IO::has($info['path'],1);
+					$infoMore = array_merge($infoPath,$infoMore);
+				}
 			}
 		}
-		$info['hasFolder']  = $infoMore['hasFolder'];
-		$info['hasFile']  	= $infoMore['hasFile'];
+		if(is_array($infoMore)){
+			$info = array_merge($info,$infoMore);
+		}
 		return $info;
 	}
 

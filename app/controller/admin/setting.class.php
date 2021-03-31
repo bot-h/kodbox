@@ -69,6 +69,7 @@ class adminSetting extends Controller {
 					'host'		=> array('check' => 'require'),
 					'email'		=> array('check' => 'require'),
 					'password'	=> array('check' => 'require'),
+					'secure'	=> array('default' => 'null'),
 				))
 			)
 		);

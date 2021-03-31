@@ -211,6 +211,7 @@ class adminServer extends Controller {
 		}catch(Exception $e){
 			show_json(sprintf(LNG('admin.install.cacheConnectError'),"[{$type}]"), false);
 		}
+		return $data;
 	}
     /**
 	 * 缓存配置切换检测、保存
@@ -222,7 +223,7 @@ class adminServer extends Controller {
 			$type = Input::get('cacheType','in',null,array('file','redis','memcached'));
 		}
 		if(in_array($type, array('redis','memcached'))) {
-			$this->_cacheCheck($type);
+			$data = $this->_cacheCheck($type);
 			if(Input::get('check', null, 0)) {
 				show_json(LNG('admin.setting.checkPassed'));
 			}
@@ -235,8 +236,8 @@ class adminServer extends Controller {
             "\$config['cache']['cacheType'] = '{$type}';"
 		);
 		if($type != 'file'){
-			$text[] = "\$config['cache']['{$type}']['host'] = '".$config['host']."';";
-			$text[] = "\$config['cache']['{$type}']['port'] = '".$config['port']."';";
+			$text[] = "\$config['cache']['{$type}']['host'] = '".$data['host']."';";
+			$text[] = "\$config['cache']['{$type}']['port'] = '".$data['port']."';";
 		}
 		$content = implode(PHP_EOL, $text);
 		if(!file_put_contents($file, $content, FILE_APPEND)) {

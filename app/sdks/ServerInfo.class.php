@@ -5,7 +5,6 @@
  * CPU、内存使用率——mac未实现
  */
 class ServerInfo {
-
     function __construct() {
         $this->sysOs = strtoupper(substr(PHP_OS, 0,3)) === 'WIN' ? 'win' : 'linux';
     }
@@ -45,14 +44,10 @@ class ServerInfo {
      * @return void
      */
     public function memUsageLinux(){
-        $str = shell_exec("more /proc/meminfo");
-        $mode = "/(.+):\s*([0-9]+)/";
-        preg_match_all($mode,$str,$arr);
         $data = array(
-            'total' => (float) $arr[2][0],
-            'used' => (float) $arr[2][0] - (float) $arr[2][2],
+            'total' => self::getMemoryUsage('MemTotal'),
+            'used'  => self::getMemoryUsage('MemRealUsage'),
         );
-        // $data['percent'] = !$data['total'] ? '0%' : sprintf("%.1f",$data['used']/$data['total']*100).'%';
         return $data;
     }
 
@@ -81,10 +76,62 @@ class ServerInfo {
             $data[] = (float) trim($tmp[1]);
         }
         $data = array(
-            'total' => $data[0],
-            'used' => ($data[0] - $data[1]),
+            'total' => $data[0] * 1024,
+            'used' => ($data[0] - $data[1]) * 1024,
         );
         // $data['percent'] = !$data['total'] ? '0%' : sprintf("%.1f",$data['used']/$data['total']*100).'%';
         return $data;
+    }
+    
+    
+    public static function getMemoryUsage($key){
+        $key = ucfirst($key);
+        static $memInfo = null;
+        if (null === $memInfo) {
+            $memInfoFile = '/proc/meminfo';
+            if ( !@is_readable($memInfoFile)) {
+                $memInfo = 0;
+                return 0;
+            }
+            $memInfo = file_get_contents($memInfoFile);
+            $memInfo = str_replace(array(
+                ' kB',
+                '  ',
+            ), '', $memInfo);
+            $lines = array();
+            foreach (explode("\n", $memInfo) as $line) {
+                if (!$line) {
+                    continue;
+                }
+                $line            = explode(':', $line);
+                $lines[$line[0]] = (float)$line[1] * 1024;
+            }
+            $memInfo = $lines;
+        }
+
+        if (!isset($memInfo['MemTotal'])){
+            return 0;
+        }
+        switch ($key) {
+            case 'MemRealUsage':
+                if (isset($memInfo['MemAvailable'])) {
+                    return $memInfo['MemTotal'] - $memInfo['MemAvailable'];
+                }
+                if (isset($memInfo['MemFree'])) {
+                    if (isset($memInfo['Buffers'], $memInfo['Cached'])) {
+                        return $memInfo['MemTotal'] - $memInfo['MemFree'] - $memInfo['Buffers'] - $memInfo['Cached'];
+                    }
+                    return $memInfo['MemTotal'] - $memInfo['Buffers'];
+                }
+                return 0;
+            case 'MemUsage':
+                return isset($memInfo['MemFree']) ? $memInfo['MemTotal'] - $memInfo['MemFree'] : 0;
+            case 'SwapUsage':
+                if ( ! isset($memInfo['SwapTotal']) || ! isset($memInfo['SwapFree'])) {
+                    return 0;
+                }
+                return $memInfo['SwapTotal'] - $memInfo['SwapFree'];
+        }
+        return isset($memInfo[$key]) ? $memInfo[$key] : 0;
     }
 }
