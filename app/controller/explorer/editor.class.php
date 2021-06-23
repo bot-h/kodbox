@@ -23,7 +23,7 @@ class explorerEditor extends Controller{
 			return $this->fileGetMake($path,$pathInfo);
 		}
 		$pathInfo = IO::info($path);
-		$pathInfo = Action('explorer.list')->pathInfoParse($pathInfo,0,0);
+		$pathInfo = Action('explorer.list')->pathInfoParse($pathInfo);
 		$this->fileGetMake($path,$pathInfo);
 	}
 	
@@ -118,7 +118,7 @@ class explorerEditor extends Controller{
 		$msg = $result ? LNG("explorer.saveSuccess") : LNG('explorer.saveError');
 		show_json($msg,!!$result);
 	}
-
+	
 	/*
 	* 保存编辑器配置信息
 	*/

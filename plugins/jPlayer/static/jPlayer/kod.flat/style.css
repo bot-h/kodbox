@@ -52,9 +52,8 @@
 	-o-transition:all 0.1s linear
 }
 .jPlayer-movie .jPlayer-container {
-	margin:0;
-	padding:0;
-	line-height:0;
+	margin:0;padding:0;line-height:0;
+	display: flex;align-content: center;justify-content: center;align-items: center;
 }
 .jPlayer-movie .jPlayerMask,
 .jPlayer-movie.jp-video-full .jPlayerMask{
@@ -107,8 +106,7 @@
 	display: flex;display: -webkit-flex;
 	align-items: center;-webkit-align-items: center;
 	justify-content: center;-webkit-justify-content: center;
-	
-	position: absolute;overflow: hidden;
+	/* position: absolute;overflow: hidden; */
 }
 .jPlayer-movie .current-time-tips{
 	display: none;
@@ -639,6 +637,7 @@
 	transition: background-color .2s ease;
 	-webkit-transition: background-color .2s ease;
 	overflow: hidden;
+	position: relative;
 }
 
 .jPlayer-music .play-list .item .name{
@@ -660,7 +659,7 @@
 .jPlayer-music .play-list .item .action-right {
 	float: right;display:none;
 	transition: all .2s ease;-webkit-transition: all .2s ease;
-    position: absolute;right: 0;margin-top: -44px;
+    position: absolute;right: 0;top:0;
 }
 .jPlayer-music .play-list .item:hover .action-right{display:block;}
 .jPlayer-music .play-list .item .action-right .download,
@@ -686,4 +685,3 @@
 .hide-play-list .aui-main{height:155px !important;}
 .hide-play-list .jPlayer-music{min-height:inherit;}
 .hide-play-list .jPlayer-music .play-list{display:none;}
-

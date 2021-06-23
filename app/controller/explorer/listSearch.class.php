@@ -13,6 +13,12 @@ class explorerListSearch extends Controller{
 	
 	// {search}/key=val@key2=value2;
 	public function listSearch($pathInfo){
+		if( !Action('user.authRole')->authCanSearch() ){
+			show_json(LNG('explorer.noPermissionAction'),false);
+		}
+		return $this->listSearchPath($pathInfo);
+	}
+	public function listSearchPath($pathInfo){
 		$param = array();$paramIn=array();$sourceInfo= array();
 		$this->parseParam($pathInfo,$param,$paramIn,$sourceInfo);
 		if(	isset($param['option']) &&
@@ -32,6 +38,7 @@ class explorerListSearch extends Controller{
 		if($param['parentPath']){
 			$list['searchParent'] = IO::info($param['parentPath']);
 		}
+		$this->searchResultCount($list);
 		return $list;
 	}
 
@@ -69,9 +76,6 @@ class explorerListSearch extends Controller{
 	}
 	
 	private function parseParam($pathInfo,&$param,&$paramIn,&$sourceInfo){
-		if( !Action('user.authRole')->authCanSearch() ){
-			show_json(LNG('explorer.noPermissionAction'),false);
-		}
 		$paramCheck = array(
 			'parentPath'=> 'require',
 			'words'		=> 'require',
@@ -264,8 +268,18 @@ class explorerListSearch extends Controller{
 		return $result;
 	}
 	
-	static function parseSearch($param){
+	private function searchResultCount(&$list){
+		if(!$list['searchParam']['words']) return;
+		$list['searchCount'] = 0;
+		foreach ($list['fileList'] as $item) {
+			if(!is_array($item['searchTextFile'])) continue;
+			$list['searchCount'] += count($item['searchTextFile']);
+		}
+	}
+	
+	public function parseSearch($param){
 		if(!$param) return array();
+		$param  = ltrim($param,'/');
 		$all    = explode('@',$param);
 		$result = array();
 		foreach ($all as $item) {

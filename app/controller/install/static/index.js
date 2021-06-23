@@ -14,8 +14,8 @@
             'next_step':    LNG['common.nextStep'],
             'ensure_ok':    LNG['admin.install.ensureNoError'],
             'update_ok':    LNG['admin.install.updateSuccess'],
-            'input_name':   LNG['admin.install.inputAdminName'],
-            'input_pwd':    LNG['admin.install.inputAdminPwd'],
+            'input_name':   LNG['admin.install.setAdminName'],
+            'input_pwd':    LNG['admin.install.setAdminPwd'],
             'text_version': LNG['common.version'],
             'text_phpbit':  LNG['common.sysVersion'],
             'text_extend':  LNG['common.extend'],
@@ -172,7 +172,7 @@
                 }
                 var delay = null;
                 if(!result.code || (result.info && result.info == '10000')) delay = 5000;
-                var msg = result.data || (LNG['explorer.error']+'!<br>'+lng.path_write);
+                var msg = result.data || (LNG['explorer.error']+', '+LNG['admin.install.setPathWrt']);
                 Tips.close(msg, result.code, delay);
                 if(!result.code) return;
                 stepNext(_this, 2);
@@ -210,7 +210,7 @@
         request('install/index/save', data, function(result){
             tips.close();
             var delay = !result.code ? 5000 : null;
-            var msg = result.data || (LNG['explorer.error']+'!<br>'+lng.path_write);
+            var msg = result.data || (LNG['explorer.error']+', '+LNG['admin.install.setPathWrt']);
             Tips.close(msg, result.code, delay);
             if(!result.code) return;
             stepNext(_this, 2);
@@ -254,7 +254,7 @@
             request('install/index/save', data, function(result){
                 tips.close();
                 var delay = !result.code ? 5000 : null;
-                var msg = result.data || (LNG['explorer.error']+'!<br>'+lng.path_write);
+                var msg = result.data || (LNG['explorer.error']+', '+LNG['admin.install.setPathWrt']);
                 Tips.close(msg, result.code, delay);
                 if(!result.code) return;
                 // 显示admin账号密码

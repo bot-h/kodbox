@@ -16,7 +16,7 @@ $config['settings'] = array(
 	'downloadUrlTime'	=> 0,			 	//下载地址生效时间，按秒计算，0代表不限制
 	'apiLoginToken'		=> '',			 	//设定则认为开启服务端api通信登录，同时作为加密密匙
 	'paramRewrite'		=> false,		 	//开启url 去除? 直接跟参数
-	'ioAvailed'			=> 'local,ftp,oss,qiniu,cos,s3,oos,minio',		//显示的io类型，多个以','分隔
+	'ioAvailed'			=> 'local,ftp,oss,qiniu,cos,s3,oos,uss,minio',		//显示的io类型，多个以','分隔
 	'ioFileOutServer'	=> false,
 	'ioUploadServer'	=> false,
 	
@@ -30,8 +30,11 @@ $config['settings'] = array(
 		
 		'ignoreExt'			=> '',          // 限制的扩展名; 扩展名在该说明中则自动不上传;
 		'downloadSpeed'		=> 0,			// 下载限速;MB/s*1024*1024; 0代表不限制		
-		'ignoreFileSize'	=> 0,			// 许单个文件上传最大值,0则不限制; 单位GB(float)
+		'ignoreFileSize'	=> 0,			// 允许单个文件上传最大值,0则不限制; 单位GB(float)
 		'osChunkSize'		=> 10,			// 对象存储分片大小(七牛固定为4Mb)
+		
+		// 图片上传压缩参数compress,默认配置不压缩,上传原图;
+		// 可以配置参考: http://fex.baidu.com/webuploader/doc/index.html#WebUploader_Uploader_options
 	),
 	'fileEditLockTimeout' 	=> 1200,		// 文件编辑锁默认锁定最长时间;默认20分钟;超过了则自动解锁;
 	'fileHistoryMax'		=> 500,			// 文件历史版本默认个数,免费版3个; 大于500则认为不限制
@@ -44,10 +47,41 @@ $config['settings'] = array(
 	'staticPath'		=> APP_HOST."static/",	//静态文件目录,可以配置到cdn;
 	'kodApiServer'		=> "https://api.kodcloud.com/?", //QQ微信登陆/邮件发送/插件-列表等 
 );
-$config['settings']['searchContent'] = 1;
-$config['settings']['searchMutil'] = 1;
-$config["ADMIN_ALLOW_IO"] = 1;		//其他部门or用户目录操作开关，仅限管理员
-$config["ADMIN_ALLOW_SOURCE"] = 1;	//物理路径操作开关，仅限管理员
+$config['settings']['searchContent'] 	= 1;		// 搜索:允许文件内容搜索
+$config['settings']['searchMutil'] 		= 1;		// 搜索:开启批量搜索
+$config['settings']['allowSEO'] 		= 1; 		// 允许SEO收录外链分享;
+$config['settings']['systemBackup'] 	= 1; 		// 系统备份;
+
+$config["ADMIN_ALLOW_IO"] 				= 1;		// 其他部门or用户目录操作开关，仅限管理员
+$config["ADMIN_ALLOW_SOURCE"] 			= 1;		// 物理路径操作开关，仅限管理员
+$config['APP_HOST_LINK'] 				= APP_HOST;	// 分享链接站点url; 可在setting_user中覆盖;
+
+// 存储类型名对应列表
+$config['settings']['ioClassList'] = array(
+	'local'				=> 'Local',
+	'ftp'				=> 'FTP',
+	'oss'				=> 'OSS',
+	'qiniu'				=> 'Qiniu',
+	'cos'				=> 'COS',
+	's3'				=> 'S3',
+	'oos'				=> 'OOS',
+	'uss'				=> 'USS',
+	'minio'				=> 'MinIO',
+
+	'eos'				=> 'EOS',	// 这3个可以追加
+	'moss'				=> 'MOSS',
+	'nos'				=> 'NOS',
+
+	'base'				=> 'Base',
+	'bases3'			=> 'BaseS3',
+	'db'				=> 'DB',
+	'dbshareitem'		=> 'DbShareItem',
+	'dbsharelink'		=> 'DbShareLink',
+	'drivershareitem'	=> 'DriverShareItem',
+	'driversharelink'	=> 'DriverShareLink',
+	'stream'			=> 'Stream',
+	'url'				=> 'Url',
+);
 
 // windows upload threads;兼容不支持并发的服务器
 if($config['systemOS'] == 'windows'){
@@ -185,6 +219,10 @@ $config['settingSystemDefault'] = array(
 	'passwordRule'		=> 'none',		// 限制密码强度;none-不限制;strong-中等强度;strongMore-高强度
 	'loginCheckAllow'	=> '',			// 登陆限制
 	'csrfProtect'		=> '1',		 	// 开启csrf保护	
+	'shareLinkZip'		=> '1',			// 外链分享,开启关闭文件夹打包下载; 默认开启
+	'systemRecycleOpen' => '0',			// 系统回收站开启关闭;
+	'systemRecycleClear'=> '10',		// 系统回收站自动清除,N天以前内容;
+	'systemBackup'		=> '1',			// 文档自动备份;
 	
 	'treeOpen'			=> 'my,myFav,myGroup,rootGroup,recentDoc,fileType,fileTag,driver',//树目录开启功能;
 	'wallpageDesktop'	=> "1,2,3,4,5,6,7,8,9,10,11,12,13",
@@ -219,8 +257,10 @@ $config['settingDefault'] = array(
 	'fileIconSize'		=> "80",		// 图标大小
 	'animateOpen'		=> "1",			// dialog动画
 	'soundOpen'			=> "0",			// 操作音效
-	'theme'				=> "win10",		// app theme [mac,win7,win10,metro,metro_green,alpha]
+	'theme'				=> "auto",		// 'light','dark-mode','auto'
+	'themeImage' 		=> "",			// url/wallpage/css
 	'wall'				=> "8",			// wall picture
+	
 	"fileRepeat"		=> "replace",	// rename,replace,skip
 	"recycleOpen"		=> "1",			// 1 | 0 代表是否开启
 	'kodAppDefault'		=> '',			// 
@@ -388,6 +428,7 @@ $config['authNotNeedLogin'] = array(
 	'user.regist.*',
 	'user.view.*',
 	'explorer.share.*',
+	'sitemap.*',
 	'install.*',		// 安装/更新
 	'plugin.*',			//插件排除，权限单独检测;
 );
@@ -415,7 +456,7 @@ $config['authAllowAction'] = array(
 	'admin.role.get','admin.job.get','admin.auth.get',
 	'admin.member.get','admin.member.getByID','admin.member.search',
 	'admin.group.get','admin.group.getByID','admin.group.search',
-);
+);//explorer/attachment/upload
 
 /**
  * 角色：拦截点对应的控制器方法；
@@ -423,7 +464,10 @@ $config['authAllowAction'] = array(
  */
 $config['authRoleAction']= array(
 	'explorer.add'			=> array('explorer.index'=>'mkdir,mkfile'),
-	'explorer.upload'		=> array('explorer.upload'=>'fileUpload'),
+	'explorer.upload'		=> array(
+		'explorer.upload'		=>'fileUpload',
+		'explorer.attachment'	=>'upload',
+	),
 	'explorer.view'			=> array(
 		'explorer.index'=>'fileOut,unzipList,fileOutBy,pathLog',
 		'explorer.editor'=>'fileGet',
@@ -446,7 +490,6 @@ $config['authRoleAction']= array(
 
 	'user.edit'				=> array(
 		'user.setting'	=> 'setConfig,setUserInfo,setHeadImage,uploadHeadImage',
-		// 'user.bind'		=> 'bindApi,bindMetaInfo,oauth,bindWithApp', //被全开放了, 构造函数中自行权限检测;
 	),
 	'user.fav' => array(
 		'explorer.fav'=>'add,rename,moveTop,moveBottom,del',

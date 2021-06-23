@@ -28,6 +28,7 @@ class adminLog extends Controller{
 		}
         $fileList = array(
             array('id' => 'explorer.index.fileDownload', 'text' => LNG('admin.log.downFile')),
+            array('id' => 'explorer.index.zipDownload', 'text' => LNG('admin.log.downFolder')),
             array('id' => 'explorer.fav.add', 'text' => LNG('explorer.addFav')),
             array('id' => 'explorer.fav.del', 'text' => LNG('explorer.delFav')),
         );
@@ -90,7 +91,7 @@ class adminLog extends Controller{
 	
 
 	/**
-     * 日志列表
+     * 后台管理-日志列表
      * @return void
      */
     public function get(){
@@ -114,6 +115,7 @@ class adminLog extends Controller{
     public function log($data=false,$info=null){
         $typeList = $this->model->allTypeList();
         if(!isset($typeList[ACTION])) return;
+		if($GLOBALS['loginLogSaved'] ==1) return;
         $actionList = array(
             'user.index.logout',
             'user.index.loginSubmit',
@@ -124,7 +126,7 @@ class adminLog extends Controller{
             // 文件类的操作，此处只收集这3个
             if(MOD == 'explorer') {
                 $act = ST . '.' . ACT;
-                $func = array('fav.add', 'fav.del', 'index.fileDownload');
+                $func = array('fav.add', 'fav.del', 'index.fileDownload', 'index.zipDownload');
                 if(!in_array($act, $func)) return;
             }
             if(!is_array($data)) {
@@ -136,7 +138,7 @@ class adminLog extends Controller{
         if(ACTION == 'user.bind.bindApi' && !$data['success']) return;
         if(ACTION == 'user.index.loginSubmit'){
             return $this->loginLog();
-        }
+        }		
         return $this->model->addLog(ACTION, $data);
     }
 
@@ -147,6 +149,8 @@ class adminLog extends Controller{
      * @return void
      */
     public function loginLog(){
+		if($GLOBALS['loginLogSaved'] == 1) return;
+		$GLOBALS['loginLogSaved'] = 1;
         $data = array(
             'is_wap' => is_wap(),
             'ua' => isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : ''
@@ -155,12 +159,11 @@ class adminLog extends Controller{
             $data['is_wap'] = true;
             $data['HTTP_X_PLATFORM'] = $this->in['HTTP_X_PLATFORM'];
         }
-        $action = 'user.index.loginSubmit';
-        return $this->model->addLog($action, $data);
+        return $this->model->addLog('user.index.loginSubmit', $data);
     }
 
     /**
-     * 用户文档日志
+     * 个人中心-用户文档日志
      * @return void
      */
     public function userLog(){
@@ -173,6 +176,7 @@ class adminLog extends Controller{
 		}
 		$add = array(
 			'explorer.index.fileDownload',
+			'explorer.index.zipDownload',
 			'explorer.fav.add',
 			'explorer.fav.del'
 		);
@@ -194,7 +198,7 @@ class adminLog extends Controller{
 		show_json($res);
     }
     /**
-     * 用户登录日志
+     * 个人中心-用户登录日志
      * @return void
      */
     public function userLogLogin(){

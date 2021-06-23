@@ -25,7 +25,7 @@ class adminBackup extends Controller{
 	}
 
 	/**
-	 * 根据所在部门获取用户列表
+	 * 获取备份列表
 	 */
 	public function get() {
 		$id		= Input::get('id',null,null);
@@ -47,9 +47,13 @@ class adminBackup extends Controller{
     // 备份——终止http请求，后台运行
     public function start(){
 		$config = $this->model->config();
-		if($config['enable'] != '1') return show_json(LNG('admin.backup.notOpen'), false);
+		if($config['enable'] != '1') {
+			show_json(LNG('admin.backup.notOpen'), false);
+		}
 		mk_dir(TEMP_FILES);
-		if(!path_writeable(TEMP_FILES)) show_json(LNG('admin.backup.pathNoWrite'), false);
+		if(!path_writeable(TEMP_FILES)) {
+			show_json(LNG('admin.backup.pathNoWrite'), false);
+		}
         echo json_encode(array('code'=>true,'data'=>'OK'));
 		http_close();
 		$this->model->start();

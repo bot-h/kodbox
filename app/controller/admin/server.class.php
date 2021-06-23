@@ -57,6 +57,37 @@ class adminServer extends Controller {
 		}
 		return $data;
 	}
+	// 获取服务器持续运行时间
+	private function srvUptime(){
+		$time = array(
+			'day'		=> 0,
+			'hour'		=> 0,
+			'minute'	=> 0,
+			'second'	=> 0,
+		);
+		$filePath = '/proc/uptime';
+        if (@is_file($filePath)) {
+			$str	= file_get_contents($filePath);
+			$num	= (float) $str;
+			$sec	= (int) fmod($num, 60);
+			$num	= (int) ($num / 60);
+			$min	= (int) $num % 60;
+			$num	= (int) ($num / 60);
+			$hour	= (int) $num % 24;
+			$num	= (int) ($num / 24);
+			$day	= (int) $num;
+			foreach($time as $k => $v) {
+				$time[$k] = $$k;
+			}
+        }
+		$str = '';
+		// $isCn = stristr(I18n::getType(),'zh') ? true : false;
+		foreach($time as $key => $val) {
+			// $ext = $isCn ? LNG('common.'.$key) : strtoupper(substr($key, 0, 1));
+			$str .= ' ' . $val . ' ' . LNG('common.'.$key);
+		}
+		return trim($str);
+	}
 	// 获取服务器状态
 	public function getSrvState(){
 		if(!Input::get('state', null, 0)) return;
@@ -83,7 +114,11 @@ class adminServer extends Controller {
 			'cpu'		=> $server->cpuUsage(),	// CPU使用率
 			'memory'	=> $sizeMem,	// 内存使用率
 			'server'	=> $this->srvSize($this->srvPath()),	// 服务器系统盘空间
-			'default'	=> $sizeDef	// 网盘默认存储空间
+			'default'	=> $sizeDef,	// 网盘默认存储空间
+			'time'		=> array(
+				'time'	=> date('Y-m-d H:i:s'), 
+				'upTime'=> $this->srvUptime()
+			)
 		);
 		show_json($data);
 	}
@@ -103,12 +138,14 @@ class adminServer extends Controller {
 		$server = $_SERVER;
 		$phpVersion = 'PHP/' . PHP_VERSION;
 		$data['server_info'] = array(
-			'name' => $server['SERVER_NAME'],
-			'ip' => $server['SERVER_ADDR'],
-			'softWare' => $server['SERVER_SOFTWARE'],
-			'phpVersion' => $phpVersion,
-			'system' => php_uname(),
-			'webPath' => BASIC_PATH,
+			'name'		=> $server['SERVER_NAME'],
+			'ip'		=> $server['SERVER_ADDR'],
+			'time'		=> date('Y-m-d H:i:s'),
+			'upTime'	=> '',
+			'softWare'	=> $server['SERVER_SOFTWARE'],
+			'phpVersion'=> $phpVersion,
+			'system'	=> php_uname(),
+			'webPath'	=> BASIC_PATH,
 		);
 
 		// 3.php信息
@@ -116,7 +153,7 @@ class adminServer extends Controller {
 		$data['php_info']['version'] = $phpVersion;
 		$info = array('memory_limit', 'post_max_size', 'upload_max_filesize', 'max_execution_time', 'max_input_time');
 		foreach($info as $key) {
-			$data['php_info'][$key] = get_cfg_var($key);
+			$data['php_info'][$key] = ini_get($key);	// get_cfg_var获取的是配置文件的值，ini_get获取的是当前值
 		}
 		$data['php_info']['disable_functions'] = ini_get('disable_functions');
 		$exts = get_loaded_extensions();
@@ -173,7 +210,7 @@ class adminServer extends Controller {
 			// 数据库文件大小
 			$file = $database['db_name'];
 			if(!isset($database['db_name'])) {
-				$file = substr($str, strlen('sqlite:'));
+				$file = substr($database['db_dsn'], strlen('sqlite:'));
 			}
 			$size = @filesize($file);
 		}else{
@@ -211,6 +248,7 @@ class adminServer extends Controller {
 		}catch(Exception $e){
 			show_json(sprintf(LNG('admin.install.cacheConnectError'),"[{$type}]"), false);
 		}
+		return $data;
 	}
     /**
 	 * 缓存配置切换检测、保存
@@ -222,7 +260,7 @@ class adminServer extends Controller {
 			$type = Input::get('cacheType','in',null,array('file','redis','memcached'));
 		}
 		if(in_array($type, array('redis','memcached'))) {
-			$this->_cacheCheck($type);
+			$data = $this->_cacheCheck($type);
 			if(Input::get('check', null, 0)) {
 				show_json(LNG('admin.setting.checkPassed'));
 			}
@@ -235,8 +273,8 @@ class adminServer extends Controller {
             "\$config['cache']['cacheType'] = '{$type}';"
 		);
 		if($type != 'file'){
-			$text[] = "\$config['cache']['{$type}']['host'] = '".$config['host']."';";
-			$text[] = "\$config['cache']['{$type}']['port'] = '".$config['port']."';";
+			$text[] = "\$config['cache']['{$type}']['host'] = '".$data['host']."';";
+			$text[] = "\$config['cache']['{$type}']['port'] = '".$data['port']."';";
 		}
 		$content = implode(PHP_EOL, $text);
 		if(!file_put_contents($file, $content, FILE_APPEND)) {
@@ -279,16 +317,16 @@ class adminServer extends Controller {
 		// 2.删除导入失败的数据库
 		$key = 'db.new_config.' . date('Y-m-d');
 		if($option = Cache::get($key)) {
-			$type = $data['db_type'];
-			if(!empty($data['db_dsn'])) {
-				$tmp = explode(':', $data['db_dsn']);
+			$type = $option['db_type'];
+			if(!empty($option['db_dsn'])) {
+				$tmp = explode(':', $option['db_dsn']);
 				$type = $tmp[0];
 			}
 			if(in_array($type, array('sqlite', 'sqlite3'))) {
 				del_dir($tmp[1]);
 			}else{
-				$restore = new Restore($option, $type);
-				$restore->dropTable();
+				$manage = new DbManage($option, $type);
+				$manage->dropTable();
 			}
 			Cache::remove($key);
 		}
@@ -332,7 +370,7 @@ class adminServer extends Controller {
 		// 数据库类型
 		$data = Input::getArray(array(
 			'db_type' => array('check' => 'in', 'param' => array('sqlite', 'mysql', 'pdo')),
-			'db_dsn'  => array('default' => ''),
+			'db_dsn'  => array('default' => ''),	// mysql/sqlite
 		));
 		$dbType = !empty($data['db_dsn']) ? $data['db_dsn'] : $data['db_type'];
 		$pdo = !empty($data['db_dsn']) ? 'pdo' : '';
@@ -559,9 +597,9 @@ class adminServer extends Controller {
 	 */
     public function copyDb($type, $option, $database){
 		// 1.初始化db
-		$restoreNew = new Restore($option, $type);
-		$restoreOld = new Restore($database, $type);
-		$dbNew = $restoreNew->db(true);
+		$manageOld = new DbManage($database, $type);
+		$manageNew = new DbManage($option, $type);
+		$dbNew = $manageNew->db(true);
 
 		// 2.指定库存在数据表，提示重新指定；不存在则继续
 		$newTable = $dbNew->getTables();
@@ -580,7 +618,7 @@ class adminServer extends Controller {
 		// 3.表结构写入目标库
 		// TODO 这里其实应该从当前库导出表结构，并创建
         $file = CONTROLLER_DIR . "install/data/{$type}.sql";
-        $restoreNew->createTable($file, $dbCrtTask);
+        $manageNew->createTable($file, $dbCrtTask);
 
 		// 4.获取当前表数据，写入sql文件
 		$newTable = $dbNew->getTables();
@@ -589,13 +627,13 @@ class adminServer extends Controller {
 
 		$dbGetTask = new Task('db.old.table.select', $type, 0, LNG('admin.setting.dbSelect'));
 		$fileList = array();
-		$oldTable = $restoreOld->db()->getTables();
+		$oldTable = $manageOld->db()->getTables();
 		$oldTable = array_diff($oldTable, array('______', 'sqlite_sequence'));
         foreach($oldTable as $table) {
 			// 对比原始库，当前库如有新增表，直接跳过
 			if(!in_array($table, $newTable)) continue;
 			$file = $pathLoc . $table . '.sql';
-            $restoreOld->sqlFromDb($table, $file, $dbGetTask);
+            $manageOld->sqlFromDb($table, $file, $dbGetTask);
             $fileList[] = $file;
 		}
 		// 这里的task缺失id等参数，导致cache无法保存，原因未知
@@ -603,7 +641,7 @@ class adminServer extends Controller {
 
 		$dbAddTask = new Task('db.new.table.insert', $type, 0, LNG('admin.setting.dbInsert'));
 		// 5.读取sql文件，写入目标库
-        $restoreNew->insertTable($fileList, $dbAddTask);
+        $manageNew->insertTable($fileList, $dbAddTask);
 
 		// 6.删除临时sql文件
         del_dir($pathLoc);
